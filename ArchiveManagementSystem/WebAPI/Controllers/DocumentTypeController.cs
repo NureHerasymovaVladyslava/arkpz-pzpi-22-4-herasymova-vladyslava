@@ -3,32 +3,32 @@ using Core.Models;
 using DAL;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using WebAPI.Models.Control;
+using WebAPI.Models.Document;
 
 namespace WebAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ControlTypeController : ControllerBase
+    public class DocumentTypeController : ControllerBase
     {
-        private readonly GenericRepository<ControlType> _controlTypeRepository;
+        private readonly GenericRepository<DocumentType> _documentTypeRepository;
 
-        public ControlTypeController(GenericRepository<ControlType> controlTypeRepository)
+        public DocumentTypeController(GenericRepository<DocumentType> documentTypeRepository)
         {
-            _controlTypeRepository = controlTypeRepository;
+            _documentTypeRepository = documentTypeRepository;
         }
 
         [HttpPost("create")]
-        public async Task<IActionResult> CreateType([FromBody] CreateControlTypeModel model)
+        public async Task<IActionResult> CreateType([FromBody] string name)
         {
             // check user access level
 
-            var type = new ControlType();
-            type.MapFrom(model);
+            var type = new DocumentType();
+            type.Name = name;
 
             try
             {
-                var result = await _controlTypeRepository.CreateAsync(type);
+                var result = await _documentTypeRepository.CreateAsync(type);
 
                 return Ok(result);
             }
@@ -39,20 +39,20 @@ namespace WebAPI.Controllers
         }
 
         [HttpPut("edit")]
-        public async Task<IActionResult> EditType([FromBody] EditControlTypeModel model)
+        public async Task<IActionResult> EditType([FromBody] EditDocumentTypeModel model)
         {
             // check user access level
 
             try
             {
-                var type = await _controlTypeRepository.GetByIdAsync(model.Id);
+                var type = await _documentTypeRepository.GetByIdAsync(model.Id);
                 if (type == null)
                 {
                     return NotFound();
                 }
 
                 type.MapFrom(model);
-                var result = await _controlTypeRepository.UpdateAsync(type);
+                var result = await _documentTypeRepository.UpdateAsync(type);
 
                 return Ok(result);
             }
@@ -69,7 +69,7 @@ namespace WebAPI.Controllers
 
             try
             {
-                var result = await _controlTypeRepository.DeleteAsync(id);
+                var result = await _documentTypeRepository.DeleteAsync(id);
 
                 return Ok(result);
             }
@@ -86,7 +86,7 @@ namespace WebAPI.Controllers
 
             try
             {
-                var result = await _controlTypeRepository.GetAllAsync();
+                var result = await _documentTypeRepository.GetAllAsync();
 
                 return Ok(result);
             }

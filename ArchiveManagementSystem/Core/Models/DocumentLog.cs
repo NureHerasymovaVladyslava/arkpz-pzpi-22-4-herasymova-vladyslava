@@ -18,6 +18,7 @@ namespace Core.Models
         public int? NewRoomId { get; set; }
         public int? NewStatusId { get; set; }
         public int? NewTypeId { get; set; }
-        public bool Approved { get; set; }
+        public string? NewAdditionalInfo { get; set; }
+        public bool? Approved { get; set; }
     }
 }

@@ -3,32 +3,32 @@ using Core.Models;
 using DAL;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using WebAPI.Models.Control;
+using WebAPI.Models.Document;
 
 namespace WebAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ControlTypeController : ControllerBase
+    public class DocumentStatusController : ControllerBase
     {
-        private readonly GenericRepository<ControlType> _controlTypeRepository;
+        private readonly GenericRepository<DocumentStatus> _documentStatusRepository;
 
-        public ControlTypeController(GenericRepository<ControlType> controlTypeRepository)
+        public DocumentStatusController(GenericRepository<DocumentStatus> documentStatusRepository)
         {
-            _controlTypeRepository = controlTypeRepository;
+            _documentStatusRepository = documentStatusRepository;
         }
 
         [HttpPost("create")]
-        public async Task<IActionResult> CreateType([FromBody] CreateControlTypeModel model)
+        public async Task<IActionResult> CreateStatus([FromBody] string name)
         {
             // check user access level
 
-            var type = new ControlType();
-            type.MapFrom(model);
+            var status = new DocumentStatus();
+            status.Name = name;
 
             try
             {
-                var result = await _controlTypeRepository.CreateAsync(type);
+                var result = await _documentStatusRepository.CreateAsync(status);
 
                 return Ok(result);
             }
@@ -39,20 +39,20 @@ namespace WebAPI.Controllers
         }
 
         [HttpPut("edit")]
-        public async Task<IActionResult> EditType([FromBody] EditControlTypeModel model)
+        public async Task<IActionResult> EditStatus([FromBody] EditDocumentStatusModel model)
         {
             // check user access level
 
             try
             {
-                var type = await _controlTypeRepository.GetByIdAsync(model.Id);
-                if (type == null)
+                var status = await _documentStatusRepository.GetByIdAsync(model.Id);
+                if (status == null)
                 {
                     return NotFound();
                 }
 
-                type.MapFrom(model);
-                var result = await _controlTypeRepository.UpdateAsync(type);
+                status.MapFrom(model);
+                var result = await _documentStatusRepository.UpdateAsync(status);
 
                 return Ok(result);
             }
@@ -63,13 +63,13 @@ namespace WebAPI.Controllers
         }
 
         [HttpDelete("delete/{id}")]
-        public async Task<IActionResult> DeleteType(int id)
+        public async Task<IActionResult> DeleteStatus(int id)
         {
             // check user access level
 
             try
             {
-                var result = await _controlTypeRepository.DeleteAsync(id);
+                var result = await _documentStatusRepository.DeleteAsync(id);
 
                 return Ok(result);
             }
@@ -86,7 +86,7 @@ namespace WebAPI.Controllers
 
             try
             {
-                var result = await _controlTypeRepository.GetAllAsync();
+                var result = await _documentStatusRepository.GetAllAsync();
 
                 return Ok(result);
             }

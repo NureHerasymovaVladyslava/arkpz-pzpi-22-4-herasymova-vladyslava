@@ -16,5 +16,6 @@ namespace Core.Models
         public int StatusId { get; set; }
         public int TypeId { get; set; }
         public DateTime Added { get; set; }
+        public string? AdditionalInfo { get; set; }
     }
 }
