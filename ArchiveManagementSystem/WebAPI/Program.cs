@@ -1,4 +1,6 @@
 
+using DAL;
+
 namespace WebAPI
 {
     public class Program
@@ -15,6 +17,10 @@ namespace WebAPI
             builder.Services.AddSwaggerGen();
 
             builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
+
+            builder.Services.AddScoped(typeof(GenericRepository<>));
+            builder.Services.AddScoped(typeof(SensorLogRepository));
+            builder.Services.AddScoped(typeof(SensorRepository));
 
             var app = builder.Build();
 

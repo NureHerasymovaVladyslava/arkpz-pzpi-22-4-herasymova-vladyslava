@@ -7,12 +7,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Dapper;
+using Dapper.Contrib.Extensions;
 
 namespace DAL
 {
     public class GenericRepository<T> where T : class
     {
-        private readonly string _connectionString;
+        protected readonly string _connectionString;
 
         public GenericRepository(IConfiguration config)
         {
@@ -22,28 +23,60 @@ namespace DAL
         public async Task<T> GetByIdAsync(int id)
         {
             using var connection = new SqlConnection(_connectionString);
-            var sql = @"SELECT * FROM @TableName WHERE Id = @Id;";
-
-            return await connection.QuerySingleAsync<T>
-                (sql, new { TableName = typeof(T).FullName, Id = id });
+            return await connection.GetAsync<T>(id);
         }
 
-        public async Task DeleteAsync(int id)
+        public async Task<int> CreateAsync(T entity)
         {
             using var connection = new SqlConnection(_connectionString);
-            var sql = @"DELETE FROM @TableName WHERE Id = @Id;";
+            return await connection.InsertAsync<T>(entity);
+        }
 
-            await connection.ExecuteAsync(sql,
-                new { TableName = typeof(T).FullName, Id = id });
+        public async Task<bool> UpdateAsync(T entity)
+        {
+            using var connection = new SqlConnection(_connectionString);
+            return await connection.UpdateAsync<T>(entity);
+        }
+
+        public async Task<bool> DeleteAsync(int id)
+        {
+            using var connection = new SqlConnection(_connectionString);
+            var entity = await GetByIdAsync(id);
+
+            return await connection.DeleteAsync<T>(entity);
         }
 
         public async Task<IEnumerable<T>> GetAllAsync()
         {
             using var connection = new SqlConnection(_connectionString);
-            var sql = @"SELECT * FROM @TableName;";
-
-            return await connection.QueryAsync<T>
-                (sql, new { TableName = typeof(T).FullName });
+            return await connection.GetAllAsync<T>();
         }
+
+        //public async Task<T> GetByIdAsync(int id)
+        //{
+        //    using var connection = new SqlConnection(_connectionString);
+        //    var sql = @"SELECT * FROM @TableName WHERE Id = @Id;";
+
+        //    return await connection.QuerySingleAsync<T>
+        //        (sql, new { TableName = typeof(T).FullName, Id = id });
+        //}
+
+        //public async Task DeleteAsync(int id)
+        //{
+        //    using var connection = new SqlConnection(_connectionString);
+        //    var sql = @"DELETE FROM @TableName WHERE Id = @Id;";
+
+        //    await connection.ExecuteAsync(sql,
+        //        new { TableName = typeof(T).FullName, Id = id });
+        //}
+
+        //public async Task<IEnumerable<T>> GetAllAsync()
+        //{
+        //    using var connection = new SqlConnection(_connectionString);
+        //    var sql = @"SELECT * FROM @TableName;";
+
+        //    return await connection.QueryAsync<T>
+        //        (sql, new { TableName = typeof(T).FullName });
+        //}
     }
 }

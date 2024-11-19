@@ -1,14 +1,6 @@
-﻿using Dapper.Contrib.Extensions;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Core.Models
+﻿namespace WebAPI.Models.Room
 {
-    [Table("Room")]
-    public class Room
+    public class EditRoomModel
     {
         public int Id { get; set; }
         public float TempMax { get; set; }
