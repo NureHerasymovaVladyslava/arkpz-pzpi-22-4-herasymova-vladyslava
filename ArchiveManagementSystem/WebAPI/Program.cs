@@ -24,6 +24,7 @@ namespace WebAPI
             builder.Services.AddScoped(typeof(LockRepository));
             builder.Services.AddScoped(typeof(LockLogRepository));
             builder.Services.AddScoped(typeof(AppUserRepository));
+            builder.Services.AddScoped(typeof(ControlRepository));
 
             var app = builder.Build();
 
