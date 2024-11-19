@@ -46,7 +46,6 @@ namespace WebAPI.Controllers
             try
             {
                 var result = await _roomRepository.GetByIdAsync(id);
-
                 if (result == null)
                 {
                     return NotFound();
@@ -68,6 +67,11 @@ namespace WebAPI.Controllers
             try
             {
                 var room = await _roomRepository.GetByIdAsync(model.Id);
+                if (room == null)
+                {
+                    return NotFound();
+                }
+
                 room.MapFrom(model);
                 var result = await _roomRepository.UpdateAsync(room);
 

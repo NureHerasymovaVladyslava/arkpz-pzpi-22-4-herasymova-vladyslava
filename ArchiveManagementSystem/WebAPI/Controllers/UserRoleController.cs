@@ -1,35 +1,34 @@
-﻿using Core.Enums;
-using Core.Helpers;
+﻿using Core.Helpers;
 using Core.Models;
 using DAL;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using WebAPI.Models.Sensor;
+using WebAPI.Models.AppUser;
 
 namespace WebAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class SensorController : ControllerBase
+    public class UserRoleController : ControllerBase
     {
-        private readonly SensorRepository _sensorRepository;
+        private readonly GenericRepository<UserRole> _userRoleRepository;
 
-        public SensorController(SensorRepository sensorRepository)
+        public UserRoleController(GenericRepository<UserRole> userRoleRepository)
         {
-            _sensorRepository = sensorRepository;
+            _userRoleRepository = userRoleRepository;
         }
 
         [HttpPost("create")]
-        public async Task<IActionResult> CreateSensor([FromBody] CreateSensorModel model)
+        public async Task<IActionResult> CreateRole([FromBody] string name)
         {
             // check user access level
 
-            var sensor = new Sensor();
-            sensor.MapFrom(model);
+            var role = new UserRole();
+            role.Name = name;
 
             try
             {
-                var result = await _sensorRepository.CreateAsync(sensor);
+                var result = await _userRoleRepository.CreateAsync(role);
 
                 return Ok(result);
             }
@@ -40,20 +39,20 @@ namespace WebAPI.Controllers
         }
 
         [HttpPut("edit")]
-        public async Task<IActionResult> EditSensor([FromBody] EditSensorModel model)
+        public async Task<IActionResult> EditRole([FromBody] EditUserRoleModel model)
         {
             // check user access level
 
             try
             {
-                var sensor = await _sensorRepository.GetByIdAsync(model.Id);
-                if (sensor == null)
+                var role = await _userRoleRepository.GetByIdAsync(model.Id);
+                if (role == null)
                 {
                     return NotFound();
                 }
 
-                sensor.MapFrom(model);
-                var result = await _sensorRepository.UpdateAsync(sensor);
+                role.MapFrom(model);
+                var result = await _userRoleRepository.UpdateAsync(role);
 
                 return Ok(result);
             }
@@ -64,13 +63,13 @@ namespace WebAPI.Controllers
         }
 
         [HttpDelete("delete/{id}")]
-        public async Task<IActionResult> DeleteSensor(int id)
+        public async Task<IActionResult> DeleteRole(int id)
         {
             // check user access level
 
             try
             {
-                var result = await _sensorRepository.DeleteAsync(id);
+                var result = await _userRoleRepository.DeleteAsync(id);
 
                 return Ok(result);
             }
@@ -80,14 +79,14 @@ namespace WebAPI.Controllers
             }
         }
 
-        [HttpGet("room/{id}")]
-        public async Task<IActionResult> GetForRoom(int id, SensorTypes? sensorType)
+        [HttpGet("all")]
+        public async Task<IActionResult> GetAll()
         {
             // check user access level
 
             try
             {
-                var result = await _sensorRepository.GetForRoomAsync(id, sensorType);
+                var result = await _userRoleRepository.GetAllAsync();
 
                 return Ok(result);
             }

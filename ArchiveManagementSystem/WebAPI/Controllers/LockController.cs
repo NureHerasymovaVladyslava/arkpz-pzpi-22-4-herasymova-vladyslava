@@ -4,32 +4,32 @@ using Core.Models;
 using DAL;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using WebAPI.Models.Sensor;
+using WebAPI.Models.Lock;
 
 namespace WebAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class SensorController : ControllerBase
+    public class LockController : ControllerBase
     {
-        private readonly SensorRepository _sensorRepository;
+        private readonly LockRepository _lockRepository;
 
-        public SensorController(SensorRepository sensorRepository)
+        public LockController(LockRepository lockRepository)
         {
-            _sensorRepository = sensorRepository;
+            _lockRepository = lockRepository;
         }
 
         [HttpPost("create")]
-        public async Task<IActionResult> CreateSensor([FromBody] CreateSensorModel model)
+        public async Task<IActionResult> CreateLock([FromBody] CreateLockModel model)
         {
             // check user access level
 
-            var sensor = new Sensor();
-            sensor.MapFrom(model);
+            var @lock = new Lock();
+            @lock.MapFrom(model);
 
             try
             {
-                var result = await _sensorRepository.CreateAsync(sensor);
+                var result = await _lockRepository.CreateAsync(@lock);
 
                 return Ok(result);
             }
@@ -40,20 +40,20 @@ namespace WebAPI.Controllers
         }
 
         [HttpPut("edit")]
-        public async Task<IActionResult> EditSensor([FromBody] EditSensorModel model)
+        public async Task<IActionResult> EditLock([FromBody] EditLockModel model)
         {
             // check user access level
 
             try
             {
-                var sensor = await _sensorRepository.GetByIdAsync(model.Id);
-                if (sensor == null)
+                var @lock = await _lockRepository.GetByIdAsync(model.Id);
+                if (@lock == null)
                 {
                     return NotFound();
                 }
 
-                sensor.MapFrom(model);
-                var result = await _sensorRepository.UpdateAsync(sensor);
+                @lock.MapFrom(model);
+                var result = await _lockRepository.UpdateAsync(@lock);
 
                 return Ok(result);
             }
@@ -64,13 +64,13 @@ namespace WebAPI.Controllers
         }
 
         [HttpDelete("delete/{id}")]
-        public async Task<IActionResult> DeleteSensor(int id)
+        public async Task<IActionResult> DeleteLock(int id)
         {
             // check user access level
 
             try
             {
-                var result = await _sensorRepository.DeleteAsync(id);
+                var result = await _lockRepository.DeleteAsync(id);
 
                 return Ok(result);
             }
@@ -81,13 +81,13 @@ namespace WebAPI.Controllers
         }
 
         [HttpGet("room/{id}")]
-        public async Task<IActionResult> GetForRoom(int id, SensorTypes? sensorType)
+        public async Task<IActionResult> GetForRoom(int id)
         {
             // check user access level
 
             try
             {
-                var result = await _sensorRepository.GetForRoomAsync(id, sensorType);
+                var result = await _lockRepository.GetForRoomAsync(id);
 
                 return Ok(result);
             }
