@@ -1,0 +1,2109 @@
+Харківський університет радіоелектроніки
+Факультет комп'ютерних наук
+Кафедра програмної інженерії
+
+
+
+ЗВІТ
+до лабораторної роботи номер 2 з дисципліни
+"Аналіз та рефакторинг коду"
+на тему: " РОЗРОБКА БАЗИ ДАНИХ ДЛЯ СЕРВЕРНОЇ ЧАСТИНИ ПРОГРАМНОЇ СИСТЕМИ ТА ПРИКЛАДНОГО ПРОГРАМНОГО ІНТЕРФЕЙСУ (API) "
+
+
+
+
+Виконала ст. гр ПЗПІ-22-4
+Герасимова Владислава Андріївна
+
+Перевірив
+ст. викладач кафедри ПІ
+Сокорчук Ігор Петрович
+
+
+
+Харків 2024
+ 
+МЕТА
+	
+Метою роботи є розробити базу даних для серверної частини та прикладного програмного інтерфейсу для програмної системи управління архівом.
+
+ХІД РОБОТИ
+
+	Виконання лабораторної роботи почалося з формування UML діаграми прецедентів для програмної системи управління архівом. Оскільки програмна система включає достатньо широкий функціонал, її діаграма прецедентів виходила завеликою та складною для сприйняття. З цієї причини її було розбито на декілька окремих частин, вони наведені нижче.
+
+ 
+Рис 1. UML діаграма прецедентів (частина 1)
+ 
+Рис 2. UML діаграма прецедентів (частина 2)
+
+ 
+Рис 3. UML діаграма прецедентів (частина 3)
+ 
+Рис 4. UML діаграма прецедентів (частина 4)
+ 
+Рис 5. UML діаграма прецедентів (частина 5)
+
+	Наступним кроком було побудовано ER діаграму. Вона наведена нижче.
+
+ 
+Рис 6. ER діаграма бази даних (нотація вороняча лапка)
+
+	На базі побудованої ER діаграми було побудовано базу даних. Діаграма її структури наведена нижче. Її було автоматично сформовано SQL Server Management Studio.
+	
+ 
+Рис 7. Діаграма структури бази даних
+
+	Наступним кроком було розроблено API для взаємодії серверної частини з клієнтами а також OpenAPI специфікацію для нього, яка наведена в Додатку А. Специфікація представляє з себе файл формату YAML та включає функціональність як первинного, так і поточних релізів.  
+За специфікацією розроблене API було реалізовано. Приклади коду серверної частини наведено в Додатку Б. Весь код наведено на гітхаб.
+Під час розробки API було зроблено наступні інженерні рішення:
+1. Система побудована за принципами багаторівневої архітектури, що включає:
+–	Клієнтську частину, яка надсилає HTTP-запити до серверної складової;
+–	Серверну частину (API), яка обробляє ці запити та забезпечує взаємодію з базою даних;
+–	СУБД (SQL Server) для збереження структурованих даних.
+Взаємодія між рівнями реалізована через RESTful API, що дозволяє забезпечити простоту інтеграції з різними клієнтами (веб та мобільний додаток, IoT пристрої).
+2. Для розробки серверної частини використовується ASP.NET Core Web API. Його головні переваги, це гнучка структура для побудови RESTful API та потужна підтримка middleware для обробки виключень, логування та авторизації.
+3. Для роботи з базою даних використовується ORM-бібліотека Dapper, яка обрана через її простоту та високу продуктивність. Складні запити формуються динамічно в коді, а найбільш стандартні – за допомогою допоміжної бібліотеки Dapper.Contrib.
+4. У якості СУБД на початковому етапі обрано SQL Server. При розгортанні системи СУБД буде змінено на Azure SQL Database.
+ 
+ВИСНОВКИ
+
+Протягом лабораторної роботи було створено UML діаграму прецедентів та ER діаграму для програмної системи управління архівом. На базі цих документів було створено базу даних та написано специфікацію OpenAPI для програмної системи.
+На базі специфікації було розроблену серверну частину програмної системи.
+Для розробки серверної частини використовувалася ASP.NET Core Web API. У якості СУБД використовувався SQL Server. Для роботи з базою даних використовувалася ORM-бібліотека Dapper.
+ 
+ДОДАТОК А
+СПЕЦИФІКАЦІЯ API
+
+
+1. openapi: 3.0.1
+2. info:
+3.   title: ArchiveManagementSystem
+4.   version: '1.0'
+5. paths:
+6.   /api/AppUser/create:
+7.     post:
+8.       tags:
+9.         - AppUser
+10.       summary: 'Add AppUser'
+11.       operationId: 'createAppUser'
+12.       requestBody:
+13.         content:
+14.           application/json:
+15.             schema:
+16.               $ref: '#/components/schemas/CreateUserModel'
+17.       responses:
+18.         '200':
+19.           description: 'New AppUser successfully created and saved to the DB'
+20.           content:
+21.             application/json:
+22.               schema:
+23.                 type: object
+24.                 properties:
+25.                   id:
+26.                     type: integer
+27.                     format: int32
+28.         '500':
+29.           description: 'Server error'
+30.   /api/AppUser/{id}:
+31.     get:
+32.       tags:
+33.         - AppUser
+34.       summary: 'Get AppUser'
+35.       operationId: 'getAppUser'
+36.       parameters:
+37.         - name: id
+38.           in: path
+39.           required: true
+40.           schema:
+41.             type: integer
+42.             format: int32
+43.       responses:
+44.         '200':
+45.           description: 'User found'
+46.           content:
+47.             application/json:
+48.               schema:
+49.                 $ref: '#/components/schemas/AppUser'
+50.         '404':
+51.           description: 'User not found'
+52.         '500':
+53.           description: 'Database error'
+54.   /api/AppUser/edit:
+55.     put:
+56.       tags:
+57.         - AppUser
+58.       summary: 'Edit AppUser data'
+59.       operationId: 'editAppUser'
+60.       requestBody:
+61.         content:
+62.           application/json:
+63.             schema:
+64.               $ref: '#/components/schemas/EditUserModel'
+65.       responses:
+66.         '200':
+67.           description: 'User data updated successfully'
+68.         '404':
+69.           description: 'User not found'
+70.         '500':
+71.           description: 'Database error'
+72.   /api/AppUser/change-password:
+73.     put:
+74.       tags:
+75.         - AppUser
+76.       summary: 'Change AppUser password after verification'
+77.       operationId: 'changeAppUserPassword'
+78.       requestBody:
+79.         content:
+80.           application/json:
+81.             schema:
+82.               $ref: '#/components/schemas/ChangePasswordModel'
+83.       responses:
+84.         '200':
+85.           description: 'User password changed successfully'
+86.         '404':
+87.           description: 'User not found'
+88.         '500':
+89.           description: 'Server error'
+90.   /api/AppUser/reset-password:
+91.     put:
+92.       tags:
+93.         - AppUser
+94.       summary: 'Reset AppUser password'
+95.       operationId: 'resetAppUserPassword'
+96.       requestBody:
+97.         content:
+98.           application/json:
+99.             schema:
+100.               type: integer
+101.               format: int32
+102.       responses:
+103.         '200':
+104.           description: 'User password reset successfully'
+105.         '404':
+106.           description: 'User not found'
+107.         '500':
+108.           description: 'Server error'
+109.   /api/AppUser/login:
+110.     post:
+111.       tags:
+112.         - AppUser
+113.       summary: 'AppUser LogIn'
+114.       operationId: 'loginAppUser'
+115.       requestBody:
+116.         content:
+117.           application/json:
+118.             schema:
+119.               $ref: '#/components/schemas/LogInModel'
+120.       responses:
+121.         '200':
+122.           description: 'Successful login'
+123.         '400':
+124.           description: 'Wrong password'
+125.         '404':
+126.           description: 'User not found'
+127.         '500':
+128.           description: 'Server error'
+129.   /api/AppUser/logout:
+130.     post:
+131.       tags:
+132.         - AppUser
+133.       responses:
+134.         '200':
+135.           description: 'Successful logout'
+136.         '500':
+137.           description: 'Server error'
+138.   /api/ChatMessage/create:
+139.     post:
+140.       tags:
+141.         - ChatMessage
+142.       summary: 'Create new ChatMessage'
+143.       operationId: 'createChatMessage'
+144.       requestBody:
+145.         content:
+146.           application/json:
+147.             schema:
+148.               $ref: '#/components/schemas/CreateChatMessage'
+149.       responses:
+150.         '200':
+151.           description: 'New ChatMessage successfully created and saved to the DB'
+152.           content:
+153.             application/json:
+154.               schema:
+155.                 type: object
+156.                 properties:
+157.                   id:
+158.                     type: integer
+159.                     format: int32
+160.         '500':
+161.           description: 'Server error'
+162.   /api/ChatMessage/all:
+163.     get:
+164.       tags:
+165.         - ChatMessage
+166.       summary: 'Get all ChatMessages'
+167.       operationId: 'getAllChatMessages'
+168.       responses:
+169.         '200':
+170.           description: 'Messages retrieved'
+171.           content:
+172.             application/json:
+173.               schema:
+174.                 $ref: '#/components/schemas/ChatMessageList'
+175.         '500':
+176.           description: 'Database error'
+177.   /api/Control/create:
+178.     post:
+179.       tags:
+180.         - Control
+181.       summary: 'Create new Control'
+182.       operationId: 'createControl'
+183.       requestBody:
+184.         content:
+185.           application/json:
+186.             schema:
+187.               $ref: '#/components/schemas/CreateControlModel'
+188.       responses:
+189.         '200':
+190.           description: 'New Control successfully created and saved to the DB'
+191.           content:
+192.             application/json:
+193.               schema:
+194.                 type: object
+195.                 properties:
+196.                   id:
+197.                     type: integer
+198.                     format: int32
+199.         '500':
+200.           description: 'Server error'
+201.   /api/Control/edit:
+202.     put:
+203.       tags:
+204.         - Control
+205.       summary: 'Edit Control data'
+206.       operationId: 'editControl'
+207.       requestBody:
+208.         content:
+209.           application/json:
+210.             schema:
+211.               $ref: '#/components/schemas/EditControlModel'
+212.       responses:
+213.         '200':
+214.           description: 'Control data updated successfully'
+215.         '404':
+216.           description: 'Control not found'
+217.         '500':
+218.           description: 'Database error'
+219.   /api/Control/delete/{id}:
+220.     delete:
+221.       tags:
+222.         - Control
+223.       summary: 'Delete Control from DB'
+224.       operationId: 'deleteControl'
+225.       parameters:
+226.         - name: id
+227.           in: path
+228.           required: true
+229.           schema:
+230.             type: integer
+231.             format: int32
+232.       responses:
+233.         '200':
+234.           description: 'Control deleted successfully'
+235.         '500':
+236.           description: 'Database error'
+237.   /api/Control/room/{id}:
+238.     get:
+239.       tags:
+240.         - Control
+241.       summary: 'Get list of Controls in specific room'
+242.       operationId: 'getControlsForRoom'
+243.       parameters:
+244.         - name: id
+245.           in: path
+246.           required: true
+247.           schema:
+248.             type: integer
+249.             format: int32
+250.         - name: typeId
+251.           in: query
+252.           schema:
+253.             type: integer
+254.             format: int32
+255.       responses:
+256.         '200':
+257.           description: 'Controls retrieved'
+258.           content:
+259.             application/json:
+260.               schema:
+261.                 $ref: '#/components/schemas/ControlList'
+262.         '500':
+263.           description: 'Database error'
+264.   /api/Control/turn-on/{id}:
+265.     post:
+266.       tags:
+267.         - Control
+268.       summary: 'Send Turn On message'
+269.       description: 'Send Turn On message to the divice that needs to be turned on'
+270.       operationId: 'turnOnControl'
+271.       parameters:
+272.         - name: id
+273.           in: path
+274.           required: true
+275.           schema:
+276.             type: integer
+277.             format: int32
+278.       responses:
+279.         '200':
+280.           description: 'Message sent to device'
+281.         '500':
+282.           description: 'Server error'
+283.   /api/Control/confirm-on/{id}:
+284.     put:
+285.       tags:
+286.         - Control
+287.       summary: 'Confirm Turn On'
+288.       description: 'Confirm that the divice was turned on and update its status in DB'
+289.       operationId: 'confirmOnControl'
+290.       parameters:
+291.         - name: id
+292.           in: path
+293.           required: true
+294.           schema:
+295.             type: integer
+296.             format: int32
+297.       responses:
+298.         '200':
+299.           description: 'Control data updated successfully'
+300.         '404':
+301.           description: 'Control not found'
+302.         '500':
+303.           description: 'Database error'
+304.   /api/Control/turn-off/{id}:
+305.     post:
+306.       tags:
+307.         - Control
+308.       summary: 'Send Turn Off message'
+309.       description: 'Send Turn Off message to the divice that needs to be turned off'
+310.       operationId: 'turnOffControl'
+311.       parameters:
+312.         - name: id
+313.           in: path
+314.           required: true
+315.           schema:
+316.             type: integer
+317.             format: int32
+318.       responses:
+319.         '200':
+320.           description: 'Message sent to device'
+321.         '500':
+322.           description: 'Server error'
+323.   /api/Control/confirm-off/{id}:
+324.     put:
+325.       tags:
+326.         - Control
+327.       summary: 'Confirm Turn Off'
+328.       description: 'Confirm that the divice was turned off and update its status in DB'
+329.       operationId: 'confirmOffControl'
+330.       parameters:
+331.         - name: id
+332.           in: path
+333.           required: true
+334.           schema:
+335.             type: integer
+336.             format: int32
+337.       responses:
+338.         '200':
+339.           description: 'Control data updated successfully'
+340.         '404':
+341.           description: 'Control not found'
+342.         '500':
+343.           description: 'Database error'
+344.   /api/ControlType/create:
+345.     post:
+346.       tags:
+347.         - ControlType
+348.       summary: 'Create new ControlType'
+349.       operationId: 'createControlType'
+350.       requestBody:
+351.         content:
+352.           application/json:
+353.             schema:
+354.               $ref: '#/components/schemas/CreateControlTypeModel'
+355.       responses:
+356.         '200':
+357.           description: 'New ControlType successfully created and saved to the DB'
+358.           content:
+359.             application/json:
+360.               schema:
+361.                 type: object
+362.                 properties:
+363.                   id:
+364.                     type: integer
+365.                     format: int32
+366.         '500':
+367.           description: 'Server error'
+368.   /api/ControlType/edit:
+369.     put:
+370.       tags:
+371.         - ControlType
+372.       summary: 'Edit ControlType data'
+373.       operationId: 'editControlType'
+374.       requestBody:
+375.         content:
+376.           application/json:
+377.             schema:
+378.               $ref: '#/components/schemas/EditControlTypeModel'
+379.       responses:
+380.         '200':
+381.           description: 'ControlType data updated successfully'
+382.         '404':
+383.           description: 'ControlType not found'
+384.         '500':
+385.           description: 'Database error'
+386.   /api/ControlType/delete/{id}:
+387.     delete:
+388.       tags:
+389.         - ControlType
+390.       summary: 'Delete ControlType from DB'
+391.       operationId: 'deleteControlType'
+392.       parameters:
+393.         - name: id
+394.           in: path
+395.           required: true
+396.           schema:
+397.             type: integer
+398.             format: int32
+399.       responses:
+400.         '200':
+401.           description: 'ControlType deleted successfully'
+402.         '500':
+403.           description: 'Database error'
+404.   /api/ControlType/all:
+405.     get:
+406.       tags:
+407.         - ControlType
+408.       summary: 'Get all ControlTypes'
+409.       operationId: 'getAllControlTypes'
+410.       responses:
+411.         '200':
+412.           description: 'ControlTypes retrieved'
+413.           content:
+414.             application/json:
+415.               schema:
+416.                 $ref: '#/components/schemas/ControlTypeList'
+417.         '500':
+418.           description: 'Database error'
+419.   /api/Document/create:
+420.     post:
+421.       tags:
+422.         - Document
+423.       summary: 'Create new Document'
+424.       operationId: 'createDocument'
+425.       requestBody:
+426.         content:
+427.           application/json:
+428.             schema:
+429.               $ref: '#/components/schemas/CreateDocumentModel'
+430.       responses:
+431.         '200':
+432.           description: 'New Document successfully created and saved to the DB'
+433.           content:
+434.             application/json:
+435.               schema:
+436.                 type: object
+437.                 properties:
+438.                   id:
+439.                     type: integer
+440.                     format: int32
+441.         '500':
+442.           description: 'Server error'
+443.   /api/Document/delete/{id}:
+444.     delete:
+445.       tags:
+446.         - Document
+447.       summary: 'Delete Document from DB'
+448.       operationId: 'deleteDocument'
+449.       parameters:
+450.         - name: id
+451.           in: path
+452.           required: true
+453.           schema:
+454.             type: integer
+455.             format: int32
+456.       responses:
+457.         '200':
+458.           description: 'Document deleted successfully'
+459.         '500':
+460.           description: 'Database error'
+461.   /api/Document/all:
+462.     get:
+463.       tags:
+464.         - Document
+465.       summary: 'Get all Documents'
+466.       operationId: 'getAllDocuments'
+467.       responses:
+468.         '200':
+469.           description: 'Documents retrieved'
+470.           content:
+471.             application/json:
+472.               schema:
+473.                 $ref: '#/components/schemas/DocumentList'
+474.         '500':
+475.           description: 'Database error'
+476.   /api/Document/edit:
+477.     put:
+478.       tags:
+479.         - Document
+480.         - DocumentLog
+481.       summary: 'Edit Document data'
+482.       operationId: 'editDocument'
+483.       requestBody:
+484.         content:
+485.           application/json:
+486.             schema:
+487.               $ref: '#/components/schemas/EditDocumentModel'
+488.       responses:
+489.         '200':
+490.           description: 'Document data updated successfully'
+491.         '404':
+492.           description: 'Document not found'
+493.         '500':
+494.           description: 'Database error'
+495.   /api/DocumentLog/create:
+496.     post:
+497.       tags:
+498.         - DocumentLog
+499.       summary: 'Create new Document edit request'
+500.       operationId: 'createDocumentLog'
+501.       requestBody:
+502.         content:
+503.           application/json:
+504.             schema:
+505.               $ref: '#/components/schemas/EditDocumentModel'
+506.       responses:
+507.         '200':
+508.           description: 'New DocumentLog (document edit request) successfully created and saved to the DB'
+509.           content:
+510.             application/json:
+511.               schema:
+512.                 type: object
+513.                 properties:
+514.                   id:
+515.                     type: integer
+516.                     format: int32
+517.         '404':
+518.           description: 'Document not found'
+519.         '500':
+520.           description: 'Server error'
+521.   /api/DocumentLog/document/{id}:
+522.     get:
+523.       tags:
+524.         - DocumentLog
+525.       summary: 'Get list of DocumentLogs (doucment edit attempts) for specific document'
+526.       operationId: 'getDocumentLogsForDocument'
+527.       parameters:
+528.         - name: id
+529.           in: path
+530.           required: true
+531.           schema:
+532.             type: integer
+533.             format: int32
+534.       responses:
+535.         '200':
+536.           description: 'DocumentLogs retrieved'
+537.           content:
+538.             application/json:
+539.               schema:
+540.                 $ref: '#/components/schemas/DocumentLogList'
+541.         '500':
+542.           description: 'Database error'
+543.   /api/DocumentLog/requests:
+544.     get:
+545.       tags:
+546.         - DocumentLog
+547.       summary: 'Get list of DocumentLogs (doucment edit attempts) that were not yet approved or discarder'
+548.       operationId: 'getUnprocessedDocumentLogs'
+549.       responses:
+550.         '200':
+551.           description: 'DocumentLogs retrieved'
+552.           content:
+553.             application/json:
+554.               schema:
+555.                 $ref: '#/components/schemas/DocumentLogList'
+556.         '500':
+557.           description: 'Database error'
+558.   /api/DocumentLog/confirm/{id}:
+559.     put:
+560.       tags:
+561.         - DocumentLog
+562.       summary: 'Confirm Document edit request'
+563.       description: 'Change log status to approved and edit the document accordingly'
+564.       operationId: 'confirmDocumentLog'
+565.       parameters:
+566.         - name: id
+567.           in: path
+568.           required: true
+569.           schema:
+570.             type: integer
+571.             format: int32
+572.       responses:
+573.         '200':
+574.           description: 'Document data and log updated successfully'
+575.         '404':
+576.           description: 'DocumentLog or Document not found'
+577.         '500':
+578.           description: 'Database error'
+579.   /api/DocumentLog/discard/{id}:
+580.     put:
+581.       tags:
+582.         - DocumentLog
+583.       summary: 'Discard Document edit request'
+584.       description: 'Change log status to discarded'
+585.       operationId: 'discardDocumentLog'
+586.       parameters:
+587.         - name: id
+588.           in: path
+589.           required: true
+590.           schema:
+591.             type: integer
+592.             format: int32
+593.       responses:
+594.         '200':
+595.           description: 'DocumentLog updated successfully'
+596.         '404':
+597.           description: 'DocumentLog not found'
+598.         '500':
+599.           description: 'Database error'
+600.   /api/DocumentStatus/create:
+601.     post:
+602.       tags:
+603.         - DocumentStatus
+604.       summary: 'Create new DocumentStatus'
+605.       operationId: 'createDocumentStatus'
+606.       requestBody:
+607.         content:
+608.           application/json:
+609.             schema:
+610.               type: string
+611.       responses:
+612.         '200':
+613.           description: 'New DocumentStatus successfully created and saved to the DB'
+614.           content:
+615.             application/json:
+616.               schema:
+617.                 type: object
+618.                 properties:
+619.                   id:
+620.                     type: integer
+621.                     format: int32
+622.         '500':
+623.           description: 'Server error'
+624.   /api/DocumentStatus/edit:
+625.     put:
+626.       tags:
+627.         - DocumentStatus
+628.       summary: 'Edit DocumentStatus data'
+629.       operationId: 'editDocumentStatus'
+630.       requestBody:
+631.         content:
+632.           application/json:
+633.             schema:
+634.               $ref: '#/components/schemas/EditDocumentStatusModel'
+635.       responses:
+636.         '200':
+637.           description: 'DocumentStatus data updated successfully'
+638.         '404':
+639.           description: 'DocumentStatus not found'
+640.         '500':
+641.           description: 'Database error'
+642.   /api/DocumentStatus/delete/{id}:
+643.     delete:
+644.       tags:
+645.         - DocumentStatus
+646.       summary: 'Delete DocumentStatus from DB'
+647.       operationId: 'deleteDocumentStatus'
+648.       parameters:
+649.         - name: id
+650.           in: path
+651.           required: true
+652.           schema:
+653.             type: integer
+654.             format: int32
+655.       responses:
+656.         '200':
+657.           description: 'DocumentStatus deleted successfully'
+658.         '500':
+659.           description: 'Database error'
+660.   /api/DocumentStatus/all:
+661.     get:
+662.       tags:
+663.         - DocumentStatus
+664.       summary: 'Get all DocumentStatuses'
+665.       operationId: 'getAllDocumentStatuses'
+666.       responses:
+667.         '200':
+668.           description: 'DocumentStatuses retrieved'
+669.           content:
+670.             application/json:
+671.               schema:
+672.                 $ref: '#/components/schemas/DocumentStatusList'
+673.         '500':
+674.           description: 'Database error'
+675.   /api/DocumentType/create:
+676.     post:
+677.       tags:
+678.         - DocumentType
+679.       summary: 'Create new DocumentType'
+680.       operationId: 'createDocumentType'
+681.       requestBody:
+682.         content:
+683.           application/json:
+684.             schema:
+685.               type: string
+686.       responses:
+687.         '200':
+688.           description: 'New DocumentType successfully created and saved to the DB'
+689.           content:
+690.             application/json:
+691.               schema:
+692.                 type: object
+693.                 properties:
+694.                   id:
+695.                     type: integer
+696.                     format: int32
+697.         '500':
+698.           description: 'Server error'
+699.   /api/DocumentType/edit:
+700.     put:
+701.       tags:
+702.         - DocumentType
+703.       summary: 'Edit DocumentType data'
+704.       operationId: 'editDocumentType'
+705.       requestBody:
+706.         content:
+707.           application/json:
+708.             schema:
+709.               $ref: '#/components/schemas/EditDocumentTypeModel'
+710.       responses:
+711.         '200':
+712.           description: 'DocumentType data updated successfully'
+713.         '404':
+714.           description: 'DocumentType not found'
+715.         '500':
+716.           description: 'Database error'
+717.   /api/DocumentType/delete/{id}:
+718.     delete:
+719.       tags:
+720.         - DocumentType
+721.       summary: 'Delete DocumentType from DB'
+722.       operationId: 'deleteDocumentType'
+723.       parameters:
+724.         - name: id
+725.           in: path
+726.           required: true
+727.           schema:
+728.             type: integer
+729.             format: int32
+730.       responses:
+731.         '200':
+732.           description: 'DocumentType deleted successfully'
+733.         '500':
+734.           description: 'Database error'
+735.   /api/DocumentType/all:
+736.     get:
+737.       tags:
+738.         - DocumentType
+739.       summary: 'Get all DocumentTypes'
+740.       operationId: 'getAllDocumentTypes'
+741.       responses:
+742.         '200':
+743.           description: 'DocumentTypes retrieved'
+744.           content:
+745.             application/json:
+746.               schema:
+747.                 $ref: '#/components/schemas/DocumentTypeList'
+748.         '500':
+749.           description: 'Database error'
+750.   /api/Lock/create:
+751.     post:
+752.       tags:
+753.         - Lock
+754.       summary: 'Create new Lock'
+755.       description: 'Register new Smart-Lock in the system'
+756.       operationId: 'createLock'
+757.       requestBody:
+758.         content:
+759.           application/json:
+760.             schema:
+761.               $ref: '#/components/schemas/CreateLockModel'
+762.       responses:
+763.         '200':
+764.           description: 'New Lock successfully created and saved to the DB'
+765.           content:
+766.             application/json:
+767.               schema:
+768.                 type: object
+769.                 properties:
+770.                   id:
+771.                     type: integer
+772.                     format: int32
+773.         '500':
+774.           description: 'Database error'
+775.   /api/Lock/edit:
+776.     put:
+777.       tags:
+778.         - Lock
+779.       summary: 'Edit Lock data'
+780.       operationId: 'editLock'
+781.       requestBody:
+782.         content:
+783.           application/json:
+784.             schema:
+785.               $ref: '#/components/schemas/EditLockModel'
+786.       responses:
+787.         '200':
+788.           description: 'Lock data updated successfully'
+789.         '404':
+790.           description: 'Lock not found'
+791.         '500':
+792.           description: 'Database error'
+793.   /api/Lock/delete/{id}:
+794.     delete:
+795.       tags:
+796.         - Lock
+797.       summary: 'Delete Lock from DB'
+798.       operationId: 'deleteLock'
+799.       parameters:
+800.         - name: id
+801.           in: path
+802.           required: true
+803.           schema:
+804.             type: integer
+805.             format: int32
+806.       responses:
+807.         '200':
+808.           description: 'Lock deleted successfully'
+809.         '500':
+810.           description: 'Database error'
+811.   /api/Lock/room/{id}:
+812.     get:
+813.       tags:
+814.         - Lock
+815.       summary: 'Get list of Locks in specific room'
+816.       operationId: 'getLocksForRoom'
+817.       parameters:
+818.         - name: id
+819.           in: path
+820.           required: true
+821.           schema:
+822.             type: integer
+823.             format: int32
+824.       responses:
+825.         '200':
+826.           description: 'Locks retrieved'
+827.           content:
+828.             application/json:
+829.               schema:
+830.                 $ref: '#/components/schemas/LockList'
+831.         '500':
+832.           description: 'Database error'
+833.   /api/LockLog/create:
+834.     post:
+835.       tags:
+836.         - LockLog
+837.       summary: 'Create new lock access request'
+838.       operationId: 'createLockLog'
+839.       requestBody:
+840.         content:
+841.           application/json:
+842.             schema:
+843.               $ref: '#/components/schemas/CreateLockLogModel'
+844.       responses:
+845.         '200':
+846.           description: 'New LockLog (lock access request) successfully created and saved to the DB'
+847.           content:
+848.             application/json:
+849.               schema:
+850.                 type: object
+851.                 properties:
+852.                   id:
+853.                     type: integer
+854.                     format: int32
+855.         '500':
+856.           description: 'Server error'
+857.   /api/LockLog/lock/{id}:
+858.     get:
+859.       tags:
+860.         - LockLog
+861.       summary: 'Get list of lock access requests for specific lock'
+862.       operationId: 'getLockLogsForLock'
+863.       parameters:
+864.         - name: id
+865.           in: path
+866.           required: true
+867.           schema:
+868.             type: integer
+869.             format: int32
+870.       responses:
+871.         '200':
+872.           description: 'LockLogs retrieved'
+873.           content:
+874.             application/json:
+875.               schema:
+876.                 $ref: '#/components/schemas/LockLogList'
+877.         '500':
+878.           description: 'Database error'
+879.   /api/LockLog/requests:
+880.     get:
+881.       tags:
+882.         - LockLog
+883.       summary: 'Get list of LockLogs (lock access requests) that were not yet approved or discarder'
+884.       operationId: 'getUnprocessedLockLogs'
+885.       responses:
+886.         '200':
+887.           description: 'LockLogs retrieved'
+888.           content:
+889.             application/json:
+890.               schema:
+891.                 $ref: '#/components/schemas/LockLogList'
+892.         '500':
+893.           description: 'Database error'
+894.   /api/LockLog/confirm/{id}:
+895.     put:
+896.       tags:
+897.         - LockLog
+898.       summary: 'Confirm lock access request'
+899.       description: 'Change log status to approved and notify the IoT device'
+900.       operationId: 'confirmLockLog'
+901.       parameters:
+902.         - name: id
+903.           in: path
+904.           required: true
+905.           schema:
+906.             type: integer
+907.             format: int32
+908.       responses:
+909.         '200':
+910.           description: 'LockLog updated successfully'
+911.         '404':
+912.           description: 'LockLog not found'
+913.         '500':
+914.           description: 'Database error'
+915.   /api/LockLog/discard/{id}:
+916.     put:
+917.       tags:
+918.         - LockLog
+919.       summary: 'Discard lock access request'
+920.       description: 'Change log status to discarded'
+921.       operationId: 'discardLockLog'
+922.       parameters:
+923.         - name: id
+924.           in: path
+925.           required: true
+926.           schema:
+927.             type: integer
+928.             format: int32
+929.       responses:
+930.         '200':
+931.           description: 'LockLog updated successfully'
+932.         '404':
+933.           description: 'LockLog not found'
+934.         '500':
+935.           description: 'Database error'
+936.   /api/Notification/create:
+937.     post:
+938.       tags:
+939.         - Notification
+940.       summary: 'Create new Notification'
+941.       operationId: 'createNotification'
+942.       requestBody:
+943.         content:
+944.           application/json:
+945.             schema:
+946.               $ref: '#/components/schemas/CreateNotificationModel'
+947.       responses:
+948.         '200':
+949.           description: 'New Notification successfully created and saved to the DB'
+950.           content:
+951.             application/json:
+952.               schema:
+953.                 type: object
+954.                 properties:
+955.                   id:
+956.                     type: integer
+957.                     format: int32
+958.         '500':
+959.           description: 'Database error'
+960.   /api/Notification/all:
+961.     get:
+962.       tags:
+963.         - Notification
+964.       summary: 'Get all Notifications'
+965.       operationId: 'getAllNotifications'
+966.       responses:
+967.         '200':
+968.           description: 'Notifications retrieved'
+969.           content:
+970.             application/json:
+971.               schema:
+972.                 $ref: '#/components/schemas/NotificationList'
+973.         '500':
+974.           description: 'Database error'
+975.   /api/NotificationType/create:
+976.     post:
+977.       tags:
+978.         - NotificationType
+979.       summary: 'Create new NotificationType'
+980.       operationId: 'createNotificationType'
+981.       requestBody:
+982.         content:
+983.           application/json:
+984.             schema:
+985.               type: string
+986.       responses:
+987.         '200':
+988.           description: 'New NotificationType successfully created and saved to the DB'
+989.           content:
+990.             application/json:
+991.               schema:
+992.                 type: object
+993.                 properties:
+994.                   id:
+995.                     type: integer
+996.                     format: int32
+997.         '500':
+998.           description: 'Server error'
+999.   /api/NotificationType/edit:
+1000.     put:
+1001.       tags:
+1002.         - NotificationType
+1003.       summary: 'Edit NotificationType data'
+1004.       operationId: 'editNotificationType'
+1005.       requestBody:
+1006.         content:
+1007.           application/json:
+1008.             schema:
+1009.               $ref: '#/components/schemas/EditNotificationTypeModel'
+1010.       responses:
+1011.         '200':
+1012.           description: 'NotificationType data updated successfully'
+1013.         '404':
+1014.           description: 'NotificationType not found'
+1015.         '500':
+1016.           description: 'Database error'
+1017.   /api/NotificationType/delete/{id}:
+1018.     delete:
+1019.       tags:
+1020.         - NotificationType
+1021.       summary: 'Delete NotificationType from DB'
+1022.       operationId: 'deleteNotificationType'
+1023.       parameters:
+1024.         - name: id
+1025.           in: path
+1026.           required: true
+1027.           schema:
+1028.             type: integer
+1029.             format: int32
+1030.       responses:
+1031.         '200':
+1032.           description: 'NotificationType deleted successfully'
+1033.         '500':
+1034.           description: 'Database error'
+1035.   /api/NotificationType/all:
+1036.     get:
+1037.       tags:
+1038.         - NotificationType
+1039.       summary: 'Get all NotificationTypes'
+1040.       operationId: 'getAllNotificationTypes'
+1041.       responses:
+1042.         '200':
+1043.           description: 'NotificationTypes retrieved'
+1044.           content:
+1045.             application/json:
+1046.               schema:
+1047.                 $ref: '#/components/schemas/NotificationTypeList'
+1048.         '500':
+1049.           description: 'Database error'
+1050.   /api/Room/create:
+1051.     post:
+1052.       tags:
+1053.         - Room
+1054.       summary: 'Create new Room'
+1055.       description: 'Register new Room in the system'
+1056.       operationId: 'createRoom'
+1057.       requestBody:
+1058.         content:
+1059.           application/json:
+1060.             schema:
+1061.               $ref: '#/components/schemas/CreateRoomModel'
+1062.       responses:
+1063.         '200':
+1064.           description: 'New Room successfully created and saved to the DB'
+1065.           content:
+1066.             application/json:
+1067.               schema:
+1068.                 type: object
+1069.                 properties:
+1070.                   id:
+1071.                     type: integer
+1072.                     format: int32
+1073.         '500':
+1074.           description: 'Server error'
+1075.   /api/Room/{id}:
+1076.     get:
+1077.       tags:
+1078.         - Room
+1079.       summary: 'Get Room'
+1080.       operationId: 'getRoom'
+1081.       parameters:
+1082.         - name: id
+1083.           in: path
+1084.           required: true
+1085.           schema:
+1086.             type: integer
+1087.             format: int32
+1088.       responses:
+1089.         '200':
+1090.           description: 'Room retrieved'
+1091.           content:
+1092.             application/json:
+1093.               schema:
+1094.                 $ref: '#/components/schemas/Room'
+1095.         '404':
+1096.           description: 'User not found'
+1097.         '500':
+1098.           description: 'Database error'
+1099.   /api/Room/edit:
+1100.     put:
+1101.       tags:
+1102.         - Room
+1103.       summary: 'Edit Room data'
+1104.       operationId: 'editRoom'
+1105.       requestBody:
+1106.         content:
+1107.           application/json:
+1108.             schema:
+1109.               $ref: '#/components/schemas/EditRoomModel'
+1110.       responses:
+1111.         '200':
+1112.           description: 'Room data updated successfully'
+1113.         '404':
+1114.           description: 'Room not found'
+1115.         '500':
+1116.           description: 'Database error'
+1117.   /api/Room/delete/{id}:
+1118.     delete:
+1119.       tags:
+1120.         - Room
+1121.       summary: 'Delete Room from DB'
+1122.       operationId: 'deleteRoom'
+1123.       parameters:
+1124.         - name: id
+1125.           in: path
+1126.           required: true
+1127.           schema:
+1128.             type: integer
+1129.             format: int32
+1130.       responses:
+1131.         '200':
+1132.           description: 'Room deleted successfully'
+1133.         '500':
+1134.           description: 'Database error'
+1135.   /api/Room/all:
+1136.     get:
+1137.       tags:
+1138.         - Room
+1139.       summary: 'Get all Rooms'
+1140.       operationId: 'getAllRooms'
+1141.       responses:
+1142.         '200':
+1143.           description: 'Rooms retrieved'
+1144.           content:
+1145.             application/json:
+1146.               schema:
+1147.                 $ref: '#/components/schemas/RoomList'
+1148.         '500':
+1149.           description: 'Database error'
+1150.   /api/Sensor/create:
+1151.     post:
+1152.       tags:
+1153.         - Sensor
+1154.       summary: 'Create new Sensor'
+1155.       description: 'Register new Sensor in the system'
+1156.       operationId: 'createSensor'
+1157.       requestBody:
+1158.         content:
+1159.           application/json:
+1160.             schema:
+1161.               $ref: '#/components/schemas/CreateSensorModel'
+1162.       responses:
+1163.         '200':
+1164.           description: 'New Sensor successfully created and saved to the DB'
+1165.           content:
+1166.             application/json:
+1167.               schema:
+1168.                 type: object
+1169.                 properties:
+1170.                   id:
+1171.                     type: integer
+1172.                     format: int32
+1173.         '500':
+1174.           description: 'Server error'
+1175.   /api/Sensor/edit:
+1176.     put:
+1177.       tags:
+1178.         - Sensor
+1179.       summary: 'Edit Sensor data'
+1180.       operationId: 'editSensor'
+1181.       requestBody:
+1182.         content:
+1183.           application/json:
+1184.             schema:
+1185.               $ref: '#/components/schemas/EditSensorModel'
+1186.       responses:
+1187.         '200':
+1188.           description: 'Sensor data updated successfully'
+1189.         '404':
+1190.           description: 'Sensor not found'
+1191.         '500':
+1192.           description: 'Database error'
+1193.   /api/Sensor/delete/{id}:
+1194.     delete:
+1195.       tags:
+1196.         - Sensor
+1197.       summary: 'Delete Sensor from DB'
+1198.       operationId: 'deleteSensor'
+1199.       parameters:
+1200.         - name: id
+1201.           in: path
+1202.           required: true
+1203.           schema:
+1204.             type: integer
+1205.             format: int32
+1206.       responses:
+1207.         '200':
+1208.           description: 'Sensor deleted successfully'
+1209.         '500':
+1210.           description: 'Database error'
+1211.   /api/Sensor/room/{id}:
+1212.     get:
+1213.       tags:
+1214.         - Sensor
+1215.       summary: 'Get list of Sensors in specific room'
+1216.       operationId: 'getSensorsForRoom'
+1217.       parameters:
+1218.         - name: id
+1219.           in: path
+1220.           required: true
+1221.           schema:
+1222.             type: integer
+1223.             format: int32
+1224.         - name: sensorType
+1225.           in: query
+1226.           schema:
+1227.             $ref: '#/components/schemas/SensorTypes'
+1228.       responses:
+1229.         '200':
+1230.           description: 'Sensors retrieved'
+1231.           content:
+1232.             application/json:
+1233.               schema:
+1234.                 $ref: '#/components/schemas/SensorList'
+1235.         '500':
+1236.           description: 'Database error'
+1237.   /api/SensorLog/create:
+1238.     post:
+1239.       tags:
+1240.         - SensorLog
+1241.       summary: 'Create new SensorLog'
+1242.       description: 'Will be accessed from IoT devices - register SensorLog to database'
+1243.       operationId: 'createSensorLog'
+1244.       requestBody:
+1245.         content:
+1246.           application/json:
+1247.             schema:
+1248.               $ref: '#/components/schemas/CreateSensorLogModel'
+1249.       responses:
+1250.         '200':
+1251.           description: 'New SensorLog successfully created and saved to the DB'
+1252.           content:
+1253.             application/json:
+1254.               schema:
+1255.                 type: object
+1256.                 properties:
+1257.                   id:
+1258.                     type: integer
+1259.                     format: int32
+1260.         '500':
+1261.           description: 'Database error'
+1262.   /api/SensorLog/sensor/{id}:
+1263.     get:
+1264.       tags:
+1265.         - SensorLog
+1266.       summary: 'Get list of SensorLog for specific sensor'
+1267.       operationId: 'getSensorLogsForSensor'
+1268.       parameters:
+1269.         - name: id
+1270.           in: path
+1271.           required: true
+1272.           schema:
+1273.             type: integer
+1274.             format: int32
+1275.       responses:
+1276.         '200':
+1277.           description: 'SensorLogs retrieved'
+1278.           content:
+1279.             application/json:
+1280.               schema:
+1281.                 $ref: '#/components/schemas/SensorLogList'
+1282.         '500':
+1283.           description: 'Database error'
+1284.   /api/UserRole/create:
+1285.     post:
+1286.       tags:
+1287.         - UserRole
+1288.       summary: 'Create new UserRole'
+1289.       operationId: 'createUserRole'
+1290.       requestBody:
+1291.         content:
+1292.           application/json:
+1293.             schema:
+1294.               type: string
+1295.       responses:
+1296.         '200':
+1297.           description: 'New UserRole successfully created and saved to the DB'
+1298.           content:
+1299.             application/json:
+1300.               schema:
+1301.                 type: object
+1302.                 properties:
+1303.                   id:
+1304.                     type: integer
+1305.                     format: int32
+1306.         '500':
+1307.           description: 'Server error'
+1308.   /api/UserRole/edit:
+1309.     put:
+1310.       tags:
+1311.         - UserRole
+1312.       summary: 'Edit UserRole data'
+1313.       operationId: 'editUserRole'
+1314.       requestBody:
+1315.         content:
+1316.           application/json:
+1317.             schema:
+1318.               $ref: '#/components/schemas/EditUserRoleModel'
+1319.       responses:
+1320.         '200':
+1321.           description: 'UserRole data updated successfully'
+1322.         '404':
+1323.           description: 'UserRole not found'
+1324.         '500':
+1325.           description: 'Database error'
+1326.   /api/UserRole/delete/{id}:
+1327.     delete:
+1328.       tags:
+1329.         - UserRole
+1330.       summary: 'Delete UserRole from DB'
+1331.       operationId: 'deleteUserRole'
+1332.       parameters:
+1333.         - name: id
+1334.           in: path
+1335.           required: true
+1336.           schema:
+1337.             type: integer
+1338.             format: int32
+1339.       responses:
+1340.         '200':
+1341.           description: 'UserRole deleted successfully'
+1342.         '500':
+1343.           description: 'Database error'
+1344.   /api/UserRole/all:
+1345.     get:
+1346.       tags:
+1347.         - UserRole
+1348.       summary: 'Get all UserRoles'
+1349.       operationId: 'getAllUserRoles'
+1350.       responses:
+1351.         '200':
+1352.           description: 'UserRoles retrieved'
+1353.           content:
+1354.             application/json:
+1355.               schema:
+1356.                 $ref: '#/components/schemas/UserRoleList'
+1357.         '500':
+1358.           description: 'Database error'
+1359. components:
+1360.   schemas:
+1361.     ChangePasswordModel:
+1362.       type: object
+1363.       properties:
+1364.         id:
+1365.           type: integer
+1366.           format: int32
+1367.         oldPassword:
+1368.           type: string
+1369.           nullable: true
+1370.         newPassword:
+1371.           type: string
+1372.           nullable: true
+1373.       additionalProperties: false
+1374.     CreateChatMessage:
+1375.       type: object
+1376.       properties:
+1377.         userId:
+1378.           type: integer
+1379.           format: int32
+1380.         text:
+1381.           type: string
+1382.           nullable: true
+1383.       additionalProperties: false
+1384.     CreateControlModel:
+1385.       type: object
+1386.       properties:
+1387.         roomId:
+1388.           type: integer
+1389.           format: int32
+1390.         typeId:
+1391.           type: integer
+1392.           format: int32
+1393.       additionalProperties: false
+1394.     CreateControlTypeModel:
+1395.       type: object
+1396.       properties:
+1397.         name:
+1398.           type: string
+1399.           nullable: true
+1400.         description:
+1401.           type: string
+1402.           nullable: true
+1403.       additionalProperties: false
+1404.     CreateDocumentModel:
+1405.       type: object
+1406.       properties:
+1407.         name:
+1408.           type: string
+1409.           nullable: true
+1410.         roomId:
+1411.           type: integer
+1412.           format: int32
+1413.         statusId:
+1414.           type: integer
+1415.           format: int32
+1416.         typeId:
+1417.           type: integer
+1418.           format: int32
+1419.         additionalInfo:
+1420.           type: string
+1421.           nullable: true
+1422.       additionalProperties: false
+1423.     CreateLockLogModel:
+1424.       type: object
+1425.       properties:
+1426.         lockId:
+1427.           type: integer
+1428.           format: int32
+1429.         userId:
+1430.           type: integer
+1431.           format: int32
+1432.       additionalProperties: false
+1433.     CreateLockModel:
+1434.       type: object
+1435.       properties:
+1436.         roomId:
+1437.           type: integer
+1438.           format: int32
+1439.       additionalProperties: false
+1440.     CreateNotificationModel:
+1441.       type: object
+1442.       properties:
+1443.         roomId:
+1444.           type: integer
+1445.           format: int32
+1446.         typeId:
+1447.           type: integer
+1448.           format: int32
+1449.         text:
+1450.           type: string
+1451.           nullable: true
+1452.       additionalProperties: false
+1453.     CreateRoomModel:
+1454.       type: object
+1455.       properties:
+1456.         tempMax:
+1457.           type: number
+1458.           format: float
+1459.         tempMin:
+1460.           type: number
+1461.           format: float
+1462.         humMax:
+1463.           type: number
+1464.           format: float
+1465.         humMin:
+1466.           type: number
+1467.           format: float
+1468.         lightMax:
+1469.           type: integer
+1470.           format: int32
+1471.         lightMin:
+1472.           type: integer
+1473.           format: int32
+1474.       additionalProperties: false
+1475.     CreateSensorLogModel:
+1476.       type: object
+1477.       properties:
+1478.         sensorId:
+1479.           type: integer
+1480.           format: int32
+1481.         value:
+1482.           type: number
+1483.           format: float
+1484.       additionalProperties: false
+1485.     CreateSensorModel:
+1486.       type: object
+1487.       properties:
+1488.         roomId:
+1489.           type: integer
+1490.           format: int32
+1491.         sensorType:
+1492.           $ref: '#/components/schemas/SensorTypes'
+1493.       additionalProperties: false
+1494.     CreateUserModel:
+1495.       type: object
+1496.       properties:
+1497.         fullName:
+1498.           type: string
+1499.           nullable: true
+1500.         roleId:
+1501.           type: integer
+1502.           format: int32
+1503.         emailAddress:
+1504.           type: string
+1505.           nullable: true
+1506.       additionalProperties: false
+1507.     EditControlModel:
+1508.       type: object
+1509.       properties:
+1510.         id:
+1511.           type: integer
+1512.           format: int32
+1513.         roomId:
+1514.           type: integer
+1515.           format: int32
+1516.         typeId:
+1517.           type: integer
+1518.           format: int32
+1519.       additionalProperties: false
+1520.     EditControlTypeModel:
+1521.       type: object
+1522.       properties:
+1523.         id:
+1524.           type: integer
+1525.           format: int32
+1526.         name:
+1527.           type: string
+1528.           nullable: true
+1529.         description:
+1530.           type: string
+1531.           nullable: true
+1532.       additionalProperties: false
+1533.     EditDocumentModel:
+1534.       type: object
+1535.       properties:
+1536.         id:
+1537.           type: integer
+1538.           format: int32
+1539.         userId:
+1540.           type: integer
+1541.           format: int32
+1542.         name:
+1543.           type: string
+1544.           nullable: true
+1545.         roomId:
+1546.           type: integer
+1547.           format: int32
+1548.         statusId:
+1549.           type: integer
+1550.           format: int32
+1551.         typeId:
+1552.           type: integer
+1553.           format: int32
+1554.         additionalInfo:
+1555.           type: string
+1556.           nullable: true
+1557.       additionalProperties: false
+1558.     EditDocumentStatusModel:
+1559.       type: object
+1560.       properties:
+1561.         id:
+1562.           type: integer
+1563.           format: int32
+1564.         name:
+1565.           type: string
+1566.           nullable: true
+1567.       additionalProperties: false
+1568.     EditDocumentTypeModel:
+1569.       type: object
+1570.       properties:
+1571.         id:
+1572.           type: integer
+1573.           format: int32
+1574.         name:
+1575.           type: string
+1576.           nullable: true
+1577.       additionalProperties: false
+1578.     EditLockModel:
+1579.       type: object
+1580.       properties:
+1581.         id:
+1582.           type: integer
+1583.           format: int32
+1584.         roomId:
+1585.           type: integer
+1586.           format: int32
+1587.       additionalProperties: false
+1588.     EditNotificationTypeModel:
+1589.       type: object
+1590.       properties:
+1591.         id:
+1592.           type: integer
+1593.           format: int32
+1594.         name:
+1595.           type: string
+1596.           nullable: true
+1597.       additionalProperties: false
+1598.     EditRoomModel:
+1599.       type: object
+1600.       properties:
+1601.         id:
+1602.           type: integer
+1603.           format: int32
+1604.         tempMax:
+1605.           type: number
+1606.           format: float
+1607.         tempMin:
+1608.           type: number
+1609.           format: float
+1610.         humMax:
+1611.           type: number
+1612.           format: float
+1613.         humMin:
+1614.           type: number
+1615.           format: float
+1616.         lightMax:
+1617.           type: integer
+1618.           format: int32
+1619.         lightMin:
+1620.           type: integer
+1621.           format: int32
+1622.       additionalProperties: false
+1623.     EditSensorModel:
+1624.       type: object
+1625.       properties:
+1626.         id:
+1627.           type: integer
+1628.           format: int32
+1629.         roomId:
+1630.           type: integer
+1631.           format: int32
+1632.         sensorType:
+1633.           $ref: '#/components/schemas/SensorTypes'
+1634.       additionalProperties: false
+1635.     EditUserModel:
+1636.       type: object
+1637.       properties:
+1638.         id:
+1639.           type: integer
+1640.           format: int32
+1641.         fullName:
+1642.           type: string
+1643.           nullable: true
+1644.         roleId:
+1645.           type: integer
+1646.           format: int32
+1647.         emailAddress:
+1648.           type: string
+1649.           nullable: true
+1650.       additionalProperties: false
+1651.     EditUserRoleModel:
+1652.       type: object
+1653.       properties:
+1654.         id:
+1655.           type: integer
+1656.           format: int32
+1657.         name:
+1658.           type: string
+1659.           nullable: true
+1660.       additionalProperties: false
+1661.     LogInModel:
+1662.       type: object
+1663.       properties:
+1664.         emailAddress:
+1665.           type: string
+1666.           nullable: true
+1667.         password:
+1668.           type: string
+1669.           nullable: true
+1670.       additionalProperties: false
+1671.     SensorTypes:
+1672.       enum:
+1673.         - 1
+1674.         - 2
+1675.         - 3
+1676.       type: integer
+1677.       format: int32
+1678.     AppUser:
+1679.       type: object
+1680.       properties:
+1681.         id:
+1682.           type: integer
+1683.           format: int32
+1684.         fullName:
+1685.           type: string
+1686.           nullable: true
+1687.         roleId:
+1688.           type: integer
+1689.           format: int32
+1690.         emailAddress:
+1691.           type: string
+1692.           nullable: true
+1693.         passwordHash:
+1694.           type: string
+1695.       additionalProperties: false
+1696.     ChatMessageList:
+1697.       type: array
+1698.       items:
+1699.         type: object
+1700.         properties:
+1701.           id:
+1702.             type: integer
+1703.             format: int32
+1704.           userId:
+1705.             type: integer
+1706.             format: int32
+1707.           text:
+1708.             type: string
+1709.           sent:
+1710.             type: string
+1711.             format: date-time
+1712.         additionalProperties: false
+1713.     ControlList:
+1714.       type: array
+1715.       items:
+1716.         type: object
+1717.         properties:
+1718.           id:
+1719.             type: integer
+1720.             format: int32
+1721.           roomId:
+1722.             type: integer
+1723.             format: int32
+1724.           typeId:
+1725.             type: integer
+1726.             format: int32
+1727.           working:
+1728.             type: boolean
+1729.         additionalProperties: false
+1730.     ControlTypeList:
+1731.       type: array
+1732.       items:
+1733.         type: object
+1734.         properties:
+1735.           id:
+1736.             type: integer
+1737.             format: int32
+1738.           name:
+1739.             type: string
+1740.             nullable: true
+1741.           description:
+1742.             type: string
+1743.             nullable: true
+1744.         additionalProperties: false
+1745.     DocumentList:
+1746.       type: array
+1747.       items:
+1748.         type: object
+1749.         properties:
+1750.           id:
+1751.             type: integer
+1752.             format: int32
+1753.           name:
+1754.             type: string
+1755.           roomId:
+1756.             type: integer
+1757.             format: int32
+1758.           statusId:
+1759.             type: integer
+1760.             format: int32
+1761.           typeId:
+1762.             type: integer
+1763.             format: int32
+1764.           additionalInfo:
+1765.             type: string
+1766.             nullable: true
+1767.           added:
+1768.             type: string
+1769.             format: date-time
+1770.         additionalProperties: false
+1771.     DocumentLogList:
+1772.       type: array
+1773.       items:
+1774.         type: object
+1775.         properties:
+1776.           id:
+1777.             type: integer
+1778.             format: int32
+1779.           documentId:
+1780.             type: integer
+1781.             format: int32
+1782.           userId:
+1783.             type: integer
+1784.             format: int32
+1785.           newName:
+1786.             type: string
+1787.             nullable: true
+1788.           newRoomId:
+1789.             type: integer
+1790.             format: int32
+1791.             nullable: true
+1792.           newStatusId:
+1793.             type: integer
+1794.             format: int32
+1795.             nullable: true
+1796.           newTypeId:
+1797.             type: integer
+1798.             format: int32
+1799.             nullable: true
+1800.           newAdditionalInfo:
+1801.             type: string
+1802.             nullable: true
+1803.           logTime:
+1804.             type: string
+1805.             format: date-time
+1806.           approved:
+1807.             type: boolean
+1808.             nullable: true
+1809.         additionalProperties: false
+1810.     DocumentStatusList:
+1811.       type: array
+1812.       items:
+1813.         type: object
+1814.         properties:
+1815.           id:
+1816.             type: integer
+1817.             format: int32
+1818.           name:
+1819.             type: string
+1820.         additionalProperties: false
+1821.     DocumentTypeList:
+1822.       type: array
+1823.       items:
+1824.         type: object
+1825.         properties:
+1826.           id:
+1827.             type: integer
+1828.             format: int32
+1829.           name:
+1830.             type: string
+1831.         additionalProperties: false
+1832.     LockList:
+1833.       type: array
+1834.       items:
+1835.         type: object
+1836.         properties:
+1837.           id:
+1838.             type: integer
+1839.             format: int32
+1840.           roomId:
+1841.             type: integer
+1842.             format: int32
+1843.         additionalProperties: false
+1844.     LockLogList:
+1845.       type: array
+1846.       items:
+1847.         type: object
+1848.         properties:
+1849.           id:
+1850.             type: integer
+1851.             format: int32
+1852.           lockId:
+1853.             type: integer
+1854.             format: int32
+1855.           userId:
+1856.             type: integer
+1857.             format: int32
+1858.           logTime:
+1859.             type: string
+1860.             format: date-time
+1861.           approved:
+1862.             type: boolean
+1863.             nullable: true
+1864.         additionalProperties: false
+1865.     NotificationList:
+1866.       type: array
+1867.       items:
+1868.         type: object
+1869.         properties:
+1870.           id:
+1871.             type: integer
+1872.             format: int32
+1873.           roomId:
+1874.             type: integer
+1875.             format: int32
+1876.           typeId:
+1877.             type: integer
+1878.             format: int32
+1879.           sent:
+1880.             type: string
+1881.             format: date-time
+1882.           text:
+1883.             type: string
+1884.         additionalProperties: false
+1885.     NotificationTypeList:
+1886.       type: array
+1887.       items:
+1888.         type: object
+1889.         properties:
+1890.           id:
+1891.             type: integer
+1892.             format: int32
+1893.           name:
+1894.             type: string
+1895.         additionalProperties: false
+1896.     Room:
+1897.       type: object
+1898.       properties:
+1899.         id:
+1900.           type: integer
+1901.           format: int32
+1902.         TempMax:
+1903.           type: number
+1904.           format: float
+1905.         TempMin:
+1906.           type: number
+1907.           format: float
+1908.         HumMax:
+1909.           type: number
+1910.           format: float
+1911.         HumMin:
+1912.           type: number
+1913.           format: float
+1914.         LightMax:
+1915.           type: integer
+1916.           format: int32
+1917.         LightMin:
+1918.           type: integer
+1919.           format: int32
+1920.       additionalProperties: false
+1921.     RoomList:
+1922.       type: array
+1923.       items:
+1924.         $ref: '#/components/schemas/Room'
+1925.     SensorList:
+1926.       type: array
+1927.       items:
+1928.         type: object
+1929.         properties:
+1930.           id:
+1931.             type: integer
+1932.             format: int32
+1933.           roomId:
+1934.             type: integer
+1935.             format: int32
+1936.           sensorType:
+1937.             $ref: '#/components/schemas/SensorTypes'
+1938.         additionalProperties: false
+1939.     SensorLogList:
+1940.       type: array
+1941.       items:
+1942.         type: object
+1943.         properties:
+1944.           id:
+1945.             type: integer
+1946.             format: int32
+1947.           sensorId:
+1948.             type: integer
+1949.             format: int32
+1950.           value:
+1951.             type: number
+1952.             format: float
+1953.           logTime:
+1954.             type: string
+1955.             format: date-time
+1956.         additionalProperties: false
+1957.     UserRoleList:
+1958.       type: array
+1959.       items:
+1960.         type: object
+1961.         properties:
+1962.           id:
+1963.             type: integer
+1964.             format: int32
+1965.           name:
+1966.             type: string
+1967.         additionalProperties: false  
+ДОДАТОК Б
+ПРОГРАМНИЙ КОД
+
+Приклад взаємодії з базою даних
+
+1. public async Task<IEnumerable<Control>> GetForRoomAsync(int roomId, int? typeId)
+2. {
+3.     using var connection = new SqlConnection(_connectionString);
+4.     var sql = new StringBuilder(@"SELECT * FROM Control WHERE RoomId = @RoomId");
+5. 
+6.     if (typeId != null)
+7.     {
+8.         sql.Append(@" AND TypeId = @TypeId");
+9.     }
+10. 
+11.     sql.Append(";");
+12. 
+13.     return await connection.QueryAsync<Control>
+14.         (sql.ToString(), new { RoomId = roomId, TypeId = typeId });
+15. }
+
+Приклад взаємодії з клієнтом
+
+1. [Route("api/[controller]")]
+2. [ApiController]
+3. public class AppUserController : ControllerBase
+4. {
+5.     private readonly AppUserRepository _userRepository;
+6. 
+7.     public AppUserController(AppUserRepository userRepository)
+8.     {
+9.         _userRepository = userRepository;
+10.     }
+11. 
+12.     [HttpPost("create")]
+13.     public async Task<IActionResult> CreateUser([FromBody] CreateUserModel model)
+14.     {
+15.         // check user access level
+16. 
+17.         var appUser = new AppUser();
+18.         appUser.MapFrom(model);
+19. 
+20.         // generate password
+21.         appUser.PasswordHash = "1"; // Temp
+22. 
+23.         try
+24.         {
+25.             var result = await _userRepository.CreateAsync(appUser);
+26. 
+27.             // send invitation and password to email 
+28. 
+29.             return Ok(result);
+30.         }
+31.         catch (Exception ex)
+32.         {
+33.             return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+34.         }
+35.     }
+36. }
+
+ 
+ДОДАТОК В
+ВІДЕО НА ЮТУБ
+
+https://youtu.be/YdfQvGdgs_M
