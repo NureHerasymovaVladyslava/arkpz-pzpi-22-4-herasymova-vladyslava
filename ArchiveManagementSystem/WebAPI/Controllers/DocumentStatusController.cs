@@ -34,7 +34,7 @@ namespace WebAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
 
@@ -54,11 +54,11 @@ namespace WebAPI.Controllers
                 status.MapFrom(model);
                 var result = await _documentStatusRepository.UpdateAsync(status);
 
-                return Ok(result);
+                return result ? Ok() : StatusCode(StatusCodes.Status500InternalServerError);
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
 
@@ -71,11 +71,11 @@ namespace WebAPI.Controllers
             {
                 var result = await _documentStatusRepository.DeleteAsync(id);
 
-                return Ok(result);
+                return result ? Ok() : StatusCode(StatusCodes.Status500InternalServerError);
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
 
@@ -92,7 +92,7 @@ namespace WebAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
     }

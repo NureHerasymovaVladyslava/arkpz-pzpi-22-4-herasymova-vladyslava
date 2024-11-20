@@ -23,8 +23,10 @@ namespace WebAPI.Controllers
         {
             // check user access level
 
-            var role = new UserRole();
-            role.Name = name;
+            var role = new UserRole
+            {
+                Name = name
+            };
 
             try
             {
@@ -34,7 +36,7 @@ namespace WebAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
 
@@ -54,11 +56,11 @@ namespace WebAPI.Controllers
                 role.MapFrom(model);
                 var result = await _userRoleRepository.UpdateAsync(role);
 
-                return Ok(result);
+                return result ? Ok() : StatusCode(StatusCodes.Status500InternalServerError);
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
 
@@ -71,11 +73,11 @@ namespace WebAPI.Controllers
             {
                 var result = await _userRoleRepository.DeleteAsync(id);
 
-                return Ok(result);
+                return result ? Ok() : StatusCode(StatusCodes.Status500InternalServerError);
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
 
@@ -92,7 +94,7 @@ namespace WebAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
     }

@@ -40,7 +40,7 @@ namespace WebAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
 
@@ -61,7 +61,7 @@ namespace WebAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
 
@@ -81,11 +81,11 @@ namespace WebAPI.Controllers
                 user.MapFrom(model);
                 var result = await _userRepository.UpdateAsync(user);
 
-                return Ok(result);
+                return result ? Ok() : StatusCode(StatusCodes.Status500InternalServerError);
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
 
@@ -109,11 +109,11 @@ namespace WebAPI.Controllers
                 user.PasswordHash = model.NewPassword; // Temp
 
                 var result = await _userRepository.UpdateAsync(user);
-                return Ok(result);
+                return result ? Ok() : StatusCode(StatusCodes.Status500InternalServerError);
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
 
@@ -133,14 +133,18 @@ namespace WebAPI.Controllers
                 user.PasswordHash = "1"; // Temp
 
                 var result = await _userRepository.UpdateAsync(user);
+                if (!result)
+                {
+                    return StatusCode(StatusCodes.Status500InternalServerError);
+                }
 
                 // send temporary password to email 
 
-                return Ok(result);
+                return Ok();
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
 
@@ -156,13 +160,17 @@ namespace WebAPI.Controllers
                 }
 
                 // check password
+                if (false)
+                {
+                    return BadRequest();
+                }
                 // start session
 
                 return Ok();
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
 

@@ -61,7 +61,7 @@ namespace WebAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
 
@@ -78,7 +78,7 @@ namespace WebAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
 
@@ -95,7 +95,7 @@ namespace WebAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
 
@@ -137,11 +137,11 @@ namespace WebAPI.Controllers
 
                 var docResult = await _documentRepository.UpdateAsync(document);
 
-                return docResult ? Ok() : BadRequest();
+                return docResult ? Ok() : StatusCode(StatusCodes.Status500InternalServerError);
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
 
@@ -163,11 +163,11 @@ namespace WebAPI.Controllers
                 dockLog.Approved = false;
                 var result = await _documentLogRepository.UpdateAsync(dockLog);
 
-                return Ok(result);
+                return result ? Ok() : StatusCode(StatusCodes.Status500InternalServerError);
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
     }

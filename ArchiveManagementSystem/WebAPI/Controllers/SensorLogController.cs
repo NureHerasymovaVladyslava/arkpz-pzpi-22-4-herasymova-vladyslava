@@ -18,6 +18,8 @@ namespace WebAPI.Controllers
             _sensorLogRepository = sensorLogRepository;
         }
 
+        // will be accessed from IoT devise, may be deleted in the future and
+        // replaced with sanding a regular request from the server
         [HttpPost("create")]
         public async Task<IActionResult> CreateLog([FromBody] CreateSensorLogModel model)
         {
@@ -37,7 +39,7 @@ namespace WebAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
 
@@ -54,7 +56,7 @@ namespace WebAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
     }
