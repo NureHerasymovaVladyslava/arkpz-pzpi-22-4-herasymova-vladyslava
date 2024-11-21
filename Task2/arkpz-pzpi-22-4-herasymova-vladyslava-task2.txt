@@ -7,7 +7,7 @@
 ЗВІТ
 до лабораторної роботи номер 2 з дисципліни
 "Аналіз та рефакторинг коду"
-на тему: " РОЗРОБКА БАЗИ ДАНИХ ДЛЯ СЕРВЕРНОЇ ЧАСТИНИ ПРОГРАМНОЇ СИСТЕМИ ТА ПРИКЛАДНОГО ПРОГРАМНОГО ІНТЕРФЕЙСУ (API) "
+на тему: " РОЗРОБКА БАЗИ ДАНИХ ДЛЯ СЕРВЕРНОЇ ЧАСТИНИ ПРОГРАМНОЇ СИСТЕМИ ТА ПРИКЛАДНОГО ПРОГРАМНОГО ІНТЕРФЕЙСУ (API)"
 
 
 
@@ -29,32 +29,10 @@
 
 ХІД РОБОТИ
 
-	Виконання лабораторної роботи почалося з формування UML діаграми прецедентів для програмної системи управління архівом. Оскільки програмна система включає достатньо широкий функціонал, її діаграма прецедентів виходила завеликою та складною для сприйняття. З цієї причини її було розбито на декілька окремих частин, вони наведені нижче.
-
- 
-Рис 1. UML діаграма прецедентів (частина 1)
- 
-Рис 2. UML діаграма прецедентів (частина 2)
-
- 
-Рис 3. UML діаграма прецедентів (частина 3)
- 
-Рис 4. UML діаграма прецедентів (частина 4)
- 
-Рис 5. UML діаграма прецедентів (частина 5)
-
-	Наступним кроком було побудовано ER діаграму. Вона наведена нижче.
-
- 
-Рис 6. ER діаграма бази даних (нотація вороняча лапка)
-
-	На базі побудованої ER діаграми було побудовано базу даних. Діаграма її структури наведена нижче. Її було автоматично сформовано SQL Server Management Studio.
-	
- 
-Рис 7. Діаграма структури бази даних
-
-	Наступним кроком було розроблено API для взаємодії серверної частини з клієнтами а також OpenAPI специфікацію для нього, яка наведена в Додатку А. Специфікація представляє з себе файл формату YAML та включає функціональність як первинного, так і поточних релізів.  
-За специфікацією розроблене API було реалізовано. Приклади коду серверної частини наведено в Додатку Б. Весь код наведено на гітхаб.
+	Виконання лабораторної роботи почалося з формування UML діаграми прецедентів для програмної системи управління архівом. Оскільки програмна система включає достатньо широкий функціонал, її діаграма прецедентів виходила завеликою та складною для сприйняття. З цієї причини її було розбито на декілька окремих частин, вони наведені в Додатку А.
+	Наступним кроком було побудовано ER діаграму. Її наведено в додатку Б. На базі побудованої ER діаграми було побудовано базу даних. Діаграма її структури наведена в Додатку В. Її було автоматично сформовано SQL Server Management Studio.
+	Наступним кроком було розроблено API для взаємодії серверної частини з клієнтами а також OpenAPI специфікацію для нього, яка наведена в Додатку Г. Специфікація представляє з себе файл формату YAML та включає функціональність як первинного, так і поточних релізів.  
+За специфікацією розроблене API було реалізовано. Приклади коду серверної частини наведено в Додатку Д. Весь код наведено на гітхаб.
 Під час розробки API було зроблено наступні інженерні рішення:
 1. Система побудована за принципами багаторівневої архітектури, що включає:
 –	Клієнтську частину, яка надсилає HTTP-запити до серверної складової;
@@ -72,6 +50,33 @@
 Для розробки серверної частини використовувалася ASP.NET Core Web API. У якості СУБД використовувався SQL Server. Для роботи з базою даних використовувалася ORM-бібліотека Dapper.
  
 ДОДАТОК А
+UML ДІАГРАМА ПРЕЦЕДЕНТІВ
+
+ 
+Рис А.1. UML діаграма прецедентів (частина 1)
+
+ 
+Рис А.2. UML діаграма прецедентів (частина 2)
+
+ 
+Рис А.3. UML діаграма прецедентів (частина 3)
+ 
+Рис А.4. UML діаграма прецедентів (частина 4)
+ 
+Рис А.5. UML діаграма прецедентів (частина 5)
+
+ 
+Рис А.6. UML діаграма прецедентів (частина 6)
+ 
+ДОДАТОК Б 
+ER ДІАГРАМА БАЗИ ДАНИХ (НОТАЦІЯ ВОРОНЯЧА ЛАПКА)
+
+  
+ДОДАТОК В 
+ДІАГРАМА СТРУКТУРИ БАЗИ ДАНИХ
+
+  
+ДОДАТОК Г
 СПЕЦИФІКАЦІЯ API
 
 
@@ -2042,8 +2047,29 @@
 1965.           name:
 1966.             type: string
 1967.         additionalProperties: false  
-ДОДАТОК Б
+ДОДАТОК Д
 ПРОГРАМНИЙ КОД
+
+Приклад допоміжного класу 
+
+1. public static class MappingHelper
+2. {
+3.     public static void MapFrom<TGoal, TSource>(this TGoal goal, TSource source)
+4.     {
+5.         var sourceProps = typeof(TSource).GetProperties();
+6.         var goalProps = typeof(TGoal).GetProperties();
+7. 
+8.         foreach (var property in typeof(TSource).GetProperties())
+9.         {
+10.             var goalProp = goalProps.FirstOrDefault(p => p.Name == property.Name);
+11. 
+12.             if (goalProp != null && goalProp.PropertyType == property.PropertyType)
+13.             {
+14.                 goalProp.SetValue(goal, property.GetValue(source));
+15.             }
+16.         }
+17.     }
+18. }
 
 Приклад взаємодії з базою даних
 
@@ -2063,7 +2089,7 @@
 14.         (sql.ToString(), new { RoomId = roomId, TypeId = typeId });
 15. }
 
-Приклад взаємодії з клієнтом
+Приклад взаємодії з клієнтом (без бізнес логіки)
 
 1. [Route("api/[controller]")]
 2. [ApiController]
@@ -2100,10 +2126,148 @@
 33.             return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
 34.         }
 35.     }
-36. }
+36. 
+37.     [HttpGet("{id}")]
+38.     public async Task<IActionResult> GetUser(int id)
+39.     {
+40.         // check user access level
+41. 
+42.         try
+43.         {
+44.             var result = await _userRepository.GetByIdAsync(id);
+45.             if (result == null)
+46.             {
+47.                 return NotFound();
+48.             }
+49. 
+50.             return Ok(result);
+51.         }
+52.         catch (Exception ex)
+53.         {
+54.             return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+55.         }
+56.     }
+57. 
+58.     [HttpPut("edit")]
+59.     public async Task<IActionResult> EditUser([FromBody] EditUserModel model)
+60.     {
+61.         // check user access level
+62. 
+63.         try
+64.         {
+65.             var user = await _userRepository.GetByIdAsync(model.Id);
+66.             if (user == null)
+67.             {
+68.                 return NotFound();
+69.             }
+70. 
+71.             user.MapFrom(model);
+72.             var result = await _userRepository.UpdateAsync(user);
+73. 
+74.             return result ? Ok() : StatusCode(StatusCodes.Status500InternalServerError);
+75.         }
+76.         catch (Exception ex)
+77.         {
+78.             return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+79.         }
+80.     }
+81. 
+82.     [HttpPut("change-password")]
+83.     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordModel model)
+84.     {
+85.         // validate new password
+86. 
+87.         try
+88.         {
+89.             var user = await _userRepository.GetByIdAsync(model.Id);
+90.             if (user == null)
+91.             {
+92.                 return NotFound();
+93.             }
+94.             // Temp - later should probably be raplaced with session storage of sorts
+95. 
+96.             // get passwords hashes
+97.             // chack if old password is correct
+98. 
+99.             user.PasswordHash = model.NewPassword; // Temp
+100. 
+101.             var result = await _userRepository.UpdateAsync(user);
+102.             return result ? Ok() : StatusCode(StatusCodes.Status500InternalServerError);
+103.         }
+104.         catch (Exception ex)
+105.         {
+106.             return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+107.         }
+108.     }
+109. 
+110.     [HttpPut("reset-password")]
+111.     public async Task<IActionResult> ResetPassword([FromBody] int userId)
+112.     {
+113.         try
+114.         {
+115.             var user = await _userRepository.GetByIdAsync(userId);
+116.             if (user == null)
+117.             {
+118.                 return NotFound();
+119.             }
+120.             // Temp - later should probably be raplaced with session storage of sorts
+121. 
+122.             // generate password
+123.             user.PasswordHash = "1"; // Temp
+124. 
+125.             var result = await _userRepository.UpdateAsync(user);
+126.             if (!result)
+127.             {
+128.                 return StatusCode(StatusCodes.Status500InternalServerError);
+129.             }
+130. 
+131.             // send temporary password to email 
+132. 
+133.             return Ok();
+134.         }
+135.         catch (Exception ex)
+136.         {
+137.             return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+138.         }
+139.     }
+140. 
+141.     [HttpPost("login")]
+142.     public async Task<IActionResult> LogIn([FromBody] LogInModel model)
+143.     {
+144.         try
+145.         {
+146.             var user = await _userRepository.GetByEmailAsync(model.EmailAddress);
+147.             if (user == null)
+148.             {
+149.                 return NotFound();
+150.             }
+151. 
+152.             // check password
+153.             if (false)
+154.             {
+155.                 return BadRequest();
+156.             }
+157.             // start session
+158. 
+159.             return Ok();
+160.         }
+161.         catch (Exception ex)
+162.         {
+163.             return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+164.         }
+165.     }
+166. 
+167.     [HttpPost("logout")]
+168.     public async Task<IActionResult> LogOut()
+169.     {
+170.         // end session
+171. 
+172.         return Ok();
+173.     }
+174. }
 
  
-ДОДАТОК В
+ДОДАТОК Е
 ВІДЕО НА ЮТУБ
 
 https://youtu.be/YdfQvGdgs_M
