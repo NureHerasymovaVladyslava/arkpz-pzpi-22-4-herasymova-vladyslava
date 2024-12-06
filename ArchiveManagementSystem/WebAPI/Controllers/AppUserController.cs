@@ -1,9 +1,11 @@
 ﻿using Core.Helpers;
 using Core.Models;
 using DAL;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Cryptography;
+using System.Text;
+using WebAPI.Managers;
+using WebAPI.Middlewares;
 using WebAPI.Models.AppUser;
 
 namespace WebAPI.Controllers
@@ -12,23 +14,34 @@ namespace WebAPI.Controllers
     [ApiController]
     public class AppUserController : ControllerBase
     {
+        private const string SessionUserIdString = "UserId";
         private readonly AppUserRepository _userRepository;
+        private readonly UserRoleManager _roleManager;
 
-        public AppUserController(AppUserRepository userRepository)
+        private AppUser CurrentUser { get => HttpContext.Items["User"] as AppUser; }
+
+        public AppUserController(AppUserRepository userRepository, UserRoleManager roleManager)
         {
             _userRepository = userRepository;
+            _roleManager = roleManager;
         }
 
         [HttpPost("create")]
+        [Authorize]
         public async Task<IActionResult> CreateUser([FromBody] CreateUserModel model)
         {
-            // check user access level
+            //var currentUser = HttpContext.Items["User"] as AppUser;
+            var roleResult = await _roleManager.IsUserInRole(CurrentUser, "Admin");
+            if (!roleResult)
+            {
+                return Unauthorized();
+            }
 
             var appUser = new AppUser();
             appUser.MapFrom(model);
 
-            // generate password
-            appUser.PasswordHash = "1"; // Temp
+            var tempPassword = PasswordManager.GenerateTemporaryPassword();
+            appUser.PasswordHash = HashPassword(tempPassword);
 
             try
             {
@@ -44,10 +57,24 @@ namespace WebAPI.Controllers
             }
         }
 
+        [HttpGet("current")]
+        [Authorize]
+        public async Task<IActionResult> GetCurrentUser()
+        {
+            //var currentUser = HttpContext.Items["User"] as AppUser;
+            return Ok(CurrentUser);
+        }
+
         [HttpGet("{id}")]
+        [Authorize]
         public async Task<IActionResult> GetUser(int id)
         {
-            // check user access level
+            //var currentUser = HttpContext.Items["User"] as AppUser;
+            var roleResult = await _roleManager.IsUserInRole(CurrentUser, "Admin");
+            if (!roleResult)
+            {
+                return Unauthorized();
+            }
 
             try
             {
@@ -66,9 +93,15 @@ namespace WebAPI.Controllers
         }
 
         [HttpPut("edit")]
+        [Authorize]
         public async Task<IActionResult> EditUser([FromBody] EditUserModel model)
         {
-            // check user access level
+            //var currentUser = HttpContext.Items["User"] as AppUser;
+            var roleResult = await _roleManager.IsUserInRole(CurrentUser, "Admin");
+            if (!roleResult)
+            {
+                return Unauthorized();
+            }
 
             try
             {
@@ -90,25 +123,24 @@ namespace WebAPI.Controllers
         }
 
         [HttpPut("change-password")]
+        [Authorize]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordModel model)
         {
-            // validate new password
-
             try
             {
-                var user = await _userRepository.GetByIdAsync(model.Id);
-                if (user == null)
+                var currentUser = CurrentUser;
+                if (HashPassword(model.OldPassword) == currentUser.PasswordHash)
                 {
-                    return NotFound();
+                    string errorMessage;
+                    if (!PasswordManager.IsValidPassword(model.NewPassword, out errorMessage))
+                    {
+                        return BadRequest(errorMessage);
+                    }
+
+                    currentUser.PasswordHash = HashPassword(model.NewPassword);
                 }
-                // Temp - later should probably be raplaced with session storage of sorts
 
-                // get passwords hashes
-                // chack if old password is correct
-
-                user.PasswordHash = model.NewPassword; // Temp
-
-                var result = await _userRepository.UpdateAsync(user);
+                var result = await _userRepository.UpdateAsync(currentUser);
                 return result ? Ok() : StatusCode(StatusCodes.Status500InternalServerError);
             }
             catch (Exception ex)
@@ -118,19 +150,18 @@ namespace WebAPI.Controllers
         }
 
         [HttpPut("reset-password")]
-        public async Task<IActionResult> ResetPassword([FromBody] int userId)
+        public async Task<IActionResult> ResetPassword([FromBody] string email)
         {
             try
             {
-                var user = await _userRepository.GetByIdAsync(userId);
+                var user = await _userRepository.GetByEmailAsync(email);
                 if (user == null)
                 {
                     return NotFound();
                 }
-                // Temp - later should probably be raplaced with session storage of sorts
 
-                // generate password
-                user.PasswordHash = "1"; // Temp
+                var tempPassword = PasswordManager.GenerateTemporaryPassword();
+                user.PasswordHash = HashPassword(tempPassword);
 
                 var result = await _userRepository.UpdateAsync(user);
                 if (!result)
@@ -159,12 +190,12 @@ namespace WebAPI.Controllers
                     return NotFound();
                 }
 
-                // check password
-                if (false)
+                if (HashPassword(model.Password) != user.PasswordHash)
                 {
                     return BadRequest();
                 }
-                // start session
+
+                HttpContext.Session.SetInt32(SessionUserIdString, user.Id);
 
                 return Ok();
             }
@@ -175,11 +206,20 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost("logout")]
+        [Authorize]
         public async Task<IActionResult> LogOut()
         {
-            // end session
+            HttpContext.Session.Remove(SessionUserIdString);
 
             return Ok();
+        }
+
+        private string HashPassword(string password)
+        {
+            using var sha256 = SHA256.Create();
+            var passwordBytes = Encoding.UTF8.GetBytes(password);
+            var hashBytes = sha256.ComputeHash(passwordBytes);
+            return Convert.ToBase64String(hashBytes);
         }
     }
 }

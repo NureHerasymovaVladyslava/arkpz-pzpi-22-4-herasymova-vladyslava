@@ -1,5 +1,8 @@
 
 using DAL;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using WebAPI.Managers;
+using WebAPI.Middlewares;
 
 namespace WebAPI
 {
@@ -27,7 +30,24 @@ namespace WebAPI
             builder.Services.AddScoped(typeof(ControlRepository));
             builder.Services.AddScoped(typeof(DocumentLogRepository));
 
+            builder.Services.AddScoped(typeof(UserRoleManager));
+
+            builder.Services.AddDistributedMemoryCache();
+            builder.Services.AddSession(options =>
+            {
+                options.IdleTimeout = TimeSpan.FromMinutes(30);
+                options.Cookie.HttpOnly = true;
+                options.Cookie.IsEssential = true;
+            });
+
             var app = builder.Build();
+
+            app.UseRouting();
+
+            app.UseSession();
+
+            app.UseMiddleware<SessionMiddleware>();
+            app.UseMiddleware<AuthorizationMiddleware>();
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
@@ -37,9 +57,6 @@ namespace WebAPI
             }
 
             app.UseHttpsRedirection();
-
-            app.UseAuthorization();
-
 
             app.MapControllers();
 
