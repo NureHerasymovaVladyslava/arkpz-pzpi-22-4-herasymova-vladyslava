@@ -2,6 +2,7 @@
 using Core.Configurations;
 using DAL;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using WebAPI.Hubs;
 using WebAPI.Managers;
 using WebAPI.Middlewares;
 
@@ -63,6 +64,8 @@ namespace WebAPI
             app.UseHttpsRedirection();
 
             app.MapControllers();
+
+            app.MapHub<AlertHub>("/alertHub");
 
             app.Run();
         }

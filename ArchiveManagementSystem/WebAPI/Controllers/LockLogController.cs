@@ -83,7 +83,10 @@ namespace WebAPI.Controllers
                     return NotFound();
                 }
 
-                // verification
+                if (lockLog.Approved != null)
+                {
+                    return BadRequest();
+                }
 
                 lockLog.Approved = true;
                 var result = await _lockLogRepository.UpdateAsync(lockLog);
@@ -109,8 +112,11 @@ namespace WebAPI.Controllers
                 {
                     return NotFound();
                 }
-                
-                // verification
+
+                if (lockLog.Approved != null)
+                {
+                    return BadRequest();
+                }
 
                 lockLog.Approved = false;
                 var result = await _lockLogRepository.UpdateAsync(lockLog);

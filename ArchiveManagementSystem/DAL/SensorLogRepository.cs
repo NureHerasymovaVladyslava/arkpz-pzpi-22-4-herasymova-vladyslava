@@ -20,7 +20,7 @@ namespace DAL
         {
             using var connection = new SqlConnection(_connectionString);
             var sql = @"SELECT * FROM SensorLog WHERE SensorId = @SensorId
-                        ORDER BY LogTime;";
+                        ORDER BY LogTime DESC;";
 
             return await connection.QueryAsync<SensorLog>
                 (sql, new { SensorId = sensorId });

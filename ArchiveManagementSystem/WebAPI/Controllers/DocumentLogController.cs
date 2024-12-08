@@ -111,9 +111,13 @@ namespace WebAPI.Controllers
                     return NotFound();
                 }
 
-                // verification
+                if (docLog.Approved != null)
+                {
+                    return BadRequest();
+                }
 
                 docLog.Approved = true;
+                docLog.ApprovedTime = DateTime.Now;
                 var result = await _documentLogRepository.UpdateAsync(docLog);
 
                 if (!result)
@@ -156,7 +160,10 @@ namespace WebAPI.Controllers
                     return NotFound();
                 }
 
-                // verification
+                if (dockLog.Approved != null)
+                {
+                    return BadRequest();
+                }
 
                 dockLog.Approved = false;
                 var result = await _documentLogRepository.UpdateAsync(dockLog);

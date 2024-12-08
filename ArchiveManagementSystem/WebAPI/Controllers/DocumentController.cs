@@ -14,10 +14,10 @@ namespace WebAPI.Controllers
     [ApiController]
     public class DocumentController : ControllerBase
     {
-        private readonly GenericRepository<Document> _documentRepository;
+        private readonly DocumentRepository _documentRepository;
         private readonly DocumentLogRepository _documentLogRepository;
 
-        public DocumentController(GenericRepository<Document> documentRepository, DocumentLogRepository documentLogRepository)
+        public DocumentController(DocumentRepository documentRepository, DocumentLogRepository documentLogRepository)
         {
             _documentRepository = documentRepository;
             _documentLogRepository = documentLogRepository;
@@ -60,11 +60,13 @@ namespace WebAPI.Controllers
 
         // can be accessed from android
         [HttpGet("all")]
-        public async Task<IActionResult> GetAll() //TODO: Add sordting and filtering
+        public async Task<IActionResult> GetAll([FromQuery] SearchFilterDocumentsModel model)
         {
             try
             {
-                var result = await _documentRepository.GetAllAsync();
+                var result = await _documentRepository
+                    .GetDocumentsAsync(model.SearchQuery, model.RoomId, 
+                    model.StatusId, model.TypeId, model.OrderBy);
 
                 return Ok(result);
             }

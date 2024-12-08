@@ -15,10 +15,12 @@ namespace WebAPI.Controllers
     public class SensorController : ControllerBase
     {
         private readonly SensorRepository _sensorRepository;
+        private readonly SensorLogRepository _sensorLogRepository;
 
-        public SensorController(SensorRepository sensorRepository)
+        public SensorController(SensorRepository sensorRepository, SensorLogRepository sensorLogRepository)
         {
             _sensorRepository = sensorRepository;
+            _sensorLogRepository = sensorLogRepository;
         }
 
         [HttpPost("create")]
@@ -88,6 +90,79 @@ namespace WebAPI.Controllers
                 var result = await _sensorRepository.GetForRoomAsync(id, sensorType);
 
                 return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
+        }
+
+        [HttpGet("diagnosis")]
+        [Authorize(UserRoleManager.RoleManager)]
+        public async Task<IActionResult> ConductDiagnosis(int roomId, SensorType sensorType, int minutes)
+        {
+            try
+            {
+                if (minutes > 120)
+                {
+                    return BadRequest();
+                }
+                var sensors = await _sensorRepository.GetForRoomAsync(roomId, sensorType);
+                var sensorLogs = new Dictionary<int, float[]>();
+
+                var avgArray = new float[minutes];
+                var valuesCount = new int[minutes];
+
+                foreach (var sensor in sensors)
+                {
+                    var logs = await _sensorLogRepository.GetForSensorAsync(sensor.Id);
+                    var values = logs.Take(minutes).Select(l => l.Value).ToArray();
+                    sensorLogs.Add(sensor.Id, values);
+
+                    for (int i = 0; i < values.Length; i++)
+                    {
+                        avgArray[i] += values[i];
+                        valuesCount[i]++;
+                    }
+                }
+
+                for (int i = 0; i < avgArray.Length; i++)
+                {
+                    if (valuesCount[i] == 0)
+                    {
+                        break;
+                    }
+
+                    avgArray[i] /= valuesCount[i];
+                }
+
+                var diagnosisResults = new List<SensorDiagnosisResult>();
+
+                foreach (var sensor in sensors)
+                {
+                    var diagnosisResult = new SensorDiagnosisResult() { Id = sensor.Id };
+                    float devSum = 0;
+
+                    for (int i = 0; i < sensorLogs[sensor.Id].Length; i++)
+                    {
+                        var dif = sensorLogs[sensor.Id][i] - avgArray[i];
+
+                        if (dif > 0)
+                        {
+                            devSum += dif;
+                        }
+                        else
+                        {
+                            devSum -= dif;
+                        }
+                    }
+
+                    diagnosisResult.FailProbability = devSum / sensorLogs[sensor.Id].Length;
+
+                    diagnosisResults.Add(diagnosisResult);
+                }
+
+                return Ok(diagnosisResults);
             }
             catch (Exception ex)
             {
