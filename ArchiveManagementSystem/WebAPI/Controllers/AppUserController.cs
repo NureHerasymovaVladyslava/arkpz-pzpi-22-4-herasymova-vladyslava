@@ -17,20 +17,22 @@ namespace WebAPI.Controllers
         private const string SessionUserIdString = "UserId";
         private readonly AppUserRepository _userRepository;
         private readonly UserRoleManager _roleManager;
+        private readonly EmailManager _emailManager;
 
         private AppUser CurrentUser { get => HttpContext.Items["User"] as AppUser; }
 
-        public AppUserController(AppUserRepository userRepository, UserRoleManager roleManager)
+        public AppUserController(AppUserRepository userRepository, 
+            UserRoleManager roleManager, EmailManager emailManager)
         {
             _userRepository = userRepository;
             _roleManager = roleManager;
+            _emailManager = emailManager;
         }
 
         [HttpPost("create")]
         [Authorize]
         public async Task<IActionResult> CreateUser([FromBody] CreateUserModel model)
         {
-            //var currentUser = HttpContext.Items["User"] as AppUser;
             var roleResult = await _roleManager.IsUserInRole(CurrentUser, "Admin");
             if (!roleResult)
             {
@@ -47,9 +49,11 @@ namespace WebAPI.Controllers
             {
                 var result = await _userRepository.CreateAsync(appUser);
 
-                // send invitation and password to email 
+                var emailResult = await _emailManager
+                    .SendNewUserEmail(appUser.FullName, tempPassword, appUser.EmailAddress);
 
-                return Ok(result);
+                return emailResult ? Ok(result) : StatusCode(
+                    StatusCodes.Status500InternalServerError, "Failed to send an email");
             }
             catch (Exception ex)
             {
@@ -61,7 +65,6 @@ namespace WebAPI.Controllers
         [Authorize]
         public async Task<IActionResult> GetCurrentUser()
         {
-            //var currentUser = HttpContext.Items["User"] as AppUser;
             return Ok(CurrentUser);
         }
 
@@ -69,7 +72,6 @@ namespace WebAPI.Controllers
         [Authorize]
         public async Task<IActionResult> GetUser(int id)
         {
-            //var currentUser = HttpContext.Items["User"] as AppUser;
             var roleResult = await _roleManager.IsUserInRole(CurrentUser, "Admin");
             if (!roleResult)
             {
@@ -96,7 +98,6 @@ namespace WebAPI.Controllers
         [Authorize]
         public async Task<IActionResult> EditUser([FromBody] EditUserModel model)
         {
-            //var currentUser = HttpContext.Items["User"] as AppUser;
             var roleResult = await _roleManager.IsUserInRole(CurrentUser, "Admin");
             if (!roleResult)
             {
@@ -169,9 +170,11 @@ namespace WebAPI.Controllers
                     return StatusCode(StatusCodes.Status500InternalServerError);
                 }
 
-                // send temporary password to email 
+                var emailResult = await _emailManager
+                    .SendPasswordResetEmail(user.FullName, tempPassword, user.EmailAddress);
 
-                return Ok();
+                return emailResult ? Ok() : StatusCode(
+                    StatusCodes.Status500InternalServerError, "Failed to send an email");
             }
             catch (Exception ex)
             {

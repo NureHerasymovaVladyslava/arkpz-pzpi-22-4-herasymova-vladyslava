@@ -81,7 +81,7 @@ namespace WebAPI.Controllers
         }
 
         [HttpGet("room/{id}")]
-        public async Task<IActionResult> GetForRoom(int id, SensorTypes? sensorType)
+        public async Task<IActionResult> GetForRoom(int id, SensorType? sensorType)
         {
             // check user access level
 

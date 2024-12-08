@@ -1,4 +1,5 @@
 
+using Core.Configurations;
 using DAL;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using WebAPI.Managers;
@@ -31,6 +32,9 @@ namespace WebAPI
             builder.Services.AddScoped(typeof(DocumentLogRepository));
 
             builder.Services.AddScoped(typeof(UserRoleManager));
+            builder.Services.AddScoped(typeof(EmailManager));
+
+            builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection(nameof(EmailSettings)));
 
             builder.Services.AddDistributedMemoryCache();
             builder.Services.AddSession(options =>

@@ -6,6 +6,6 @@ namespace WebAPI.Models.Sensor
     {
         public int Id { get; set; }
         public int RoomId { get; set; }
-        public SensorTypes SensorType { get; set; }
+        public SensorType SensorType { get; set; }
     }
 }
