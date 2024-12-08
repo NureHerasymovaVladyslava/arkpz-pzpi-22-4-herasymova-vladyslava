@@ -31,6 +31,7 @@ namespace WebAPI
             builder.Services.AddScoped(typeof(AppUserRepository));
             builder.Services.AddScoped(typeof(ControlRepository));
             builder.Services.AddScoped(typeof(DocumentLogRepository));
+            builder.Services.AddScoped(typeof(DatabaseAdminManager));
 
             builder.Services.AddScoped(typeof(UserRoleManager));
             builder.Services.AddScoped(typeof(EmailManager));

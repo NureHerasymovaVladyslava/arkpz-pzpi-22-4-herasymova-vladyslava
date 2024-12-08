@@ -8,6 +8,7 @@ namespace WebAPI.Managers
         public const string RoleAdmin = "Admin";
         public const string RoleUser = "User";
         public const string RoleManager = "Manager";
+        public const string RoleDatabaseAdmin = "DatabaseAdmin";
 
         private readonly GenericRepository<UserRole> _userRoleRepository;
 
