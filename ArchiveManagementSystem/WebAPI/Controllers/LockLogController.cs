@@ -3,6 +3,8 @@ using Core.Models;
 using DAL;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using WebAPI.Managers;
+using WebAPI.Middlewares;
 using WebAPI.Models.Lock;
 
 namespace WebAPI.Controllers
@@ -38,10 +40,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpGet("lock/{id}")]
+        [Authorize(UserRoleManager.RoleManager)]
         public async Task<IActionResult> GetForLock(int id)
         {
-            // check user access level
-
             try
             {
                 var result = await _lockLogRepository.GetForLockAsync(id);
@@ -55,10 +56,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpGet("requests")]
+        [Authorize(UserRoleManager.RoleManager)]
         public async Task<IActionResult> GetRequests()
         {
-            // check user access level
-
             try
             {
                 var result = await _lockLogRepository.GetUnprocessedAsync();
@@ -72,10 +72,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpPut("confirm/{id}")]
+        [Authorize(UserRoleManager.RoleManager)]
         public async Task<IActionResult> ConfirmRequest(int id)
         {
-            // check user access level
-
             try
             {
                 var lockLog = await _lockLogRepository.GetByIdAsync(id);
@@ -100,10 +99,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpPut("discard/{id}")]
+        [Authorize(UserRoleManager.RoleManager)]
         public async Task<IActionResult> DiscardRequest(int id)
         {
-            // check user access level
-
             try
             {
                 var lockLog = await _lockLogRepository.GetByIdAsync(id);

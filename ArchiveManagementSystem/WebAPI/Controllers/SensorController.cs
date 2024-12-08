@@ -4,6 +4,8 @@ using Core.Models;
 using DAL;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using WebAPI.Managers;
+using WebAPI.Middlewares;
 using WebAPI.Models.Sensor;
 
 namespace WebAPI.Controllers
@@ -20,10 +22,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost("create")]
+        [Authorize(UserRoleManager.RoleAdmin)]
         public async Task<IActionResult> CreateSensor([FromBody] CreateSensorModel model)
         {
-            // check user access level
-
             var sensor = new Sensor();
             sensor.MapFrom(model);
 
@@ -40,10 +41,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpPut("edit")]
+        [Authorize(UserRoleManager.RoleAdmin)]
         public async Task<IActionResult> EditSensor([FromBody] EditSensorModel model)
         {
-            // check user access level
-
             try
             {
                 var sensor = await _sensorRepository.GetByIdAsync(model.Id);
@@ -64,10 +64,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpDelete("delete/{id}")]
+        [Authorize(UserRoleManager.RoleAdmin)]
         public async Task<IActionResult> DeleteSensor(int id)
         {
-            // check user access level
-
             try
             {
                 var result = await _sensorRepository.DeleteAsync(id);
@@ -81,10 +80,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpGet("room/{id}")]
+        [Authorize(UserRoleManager.RoleAdmin, UserRoleManager.RoleManager)]
         public async Task<IActionResult> GetForRoom(int id, SensorType? sensorType)
         {
-            // check user access level
-
             try
             {
                 var result = await _sensorRepository.GetForRoomAsync(id, sensorType);

@@ -3,6 +3,8 @@ using Core.Models;
 using DAL;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using WebAPI.Managers;
+using WebAPI.Middlewares;
 using WebAPI.Models.Document;
 
 namespace WebAPI.Controllers
@@ -19,10 +21,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost("create")]
+        [Authorize(UserRoleManager.RoleManager)]
         public async Task<IActionResult> CreateStatus([FromBody] string name)
         {
-            // check user access level
-
             var status = new DocumentStatus();
             status.Name = name;
 
@@ -39,10 +40,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpPut("edit")]
+        [Authorize(UserRoleManager.RoleManager)]
         public async Task<IActionResult> EditStatus([FromBody] EditDocumentStatusModel model)
         {
-            // check user access level
-
             try
             {
                 var status = await _documentStatusRepository.GetByIdAsync(model.Id);
@@ -63,10 +63,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpDelete("delete/{id}")]
+        [Authorize(UserRoleManager.RoleManager)]
         public async Task<IActionResult> DeleteStatus(int id)
         {
-            // check user access level
-
             try
             {
                 var result = await _documentStatusRepository.DeleteAsync(id);
@@ -80,10 +79,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpGet("all")]
+        [Authorize(UserRoleManager.RoleManager)]
         public async Task<IActionResult> GetAll()
         {
-            // check user access level
-
             try
             {
                 var result = await _documentStatusRepository.GetAllAsync();

@@ -3,6 +3,8 @@ using Core.Models;
 using DAL;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using WebAPI.Managers;
+using WebAPI.Middlewares;
 using WebAPI.Models.Control;
 
 namespace WebAPI.Controllers
@@ -19,10 +21,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost("create")]
+        [Authorize (UserRoleManager.RoleAdmin)]
         public async Task<IActionResult> CreateType([FromBody] CreateControlTypeModel model)
         {
-            // check user access level
-
             var type = new ControlType();
             type.MapFrom(model);
 
@@ -39,10 +40,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpPut("edit")]
+        [Authorize(UserRoleManager.RoleAdmin)]
         public async Task<IActionResult> EditType([FromBody] EditControlTypeModel model)
         {
-            // check user access level
-
             try
             {
                 var type = await _controlTypeRepository.GetByIdAsync(model.Id);
@@ -63,10 +63,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpDelete("delete/{id}")]
+        [Authorize(UserRoleManager.RoleAdmin)]
         public async Task<IActionResult> DeleteType(int id)
         {
-            // check user access level
-
             try
             {
                 var result = await _controlTypeRepository.DeleteAsync(id);
@@ -80,10 +79,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpGet("all")]
+        [Authorize(UserRoleManager.RoleAdmin)]
         public async Task<IActionResult> GetAll()
         {
-            // check user access level
-
             try
             {
                 var result = await _controlTypeRepository.GetAllAsync();

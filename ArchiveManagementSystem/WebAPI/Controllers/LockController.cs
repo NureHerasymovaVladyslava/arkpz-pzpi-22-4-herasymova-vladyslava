@@ -4,6 +4,8 @@ using Core.Models;
 using DAL;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using WebAPI.Managers;
+using WebAPI.Middlewares;
 using WebAPI.Models.Lock;
 
 namespace WebAPI.Controllers
@@ -20,10 +22,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost("create")]
+        [Authorize(UserRoleManager.RoleAdmin)]
         public async Task<IActionResult> CreateLock([FromBody] CreateLockModel model)
         {
-            // check user access level
-
             var @lock = new Lock();
             @lock.MapFrom(model);
 
@@ -40,10 +41,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpPut("edit")]
+        [Authorize(UserRoleManager.RoleAdmin)]
         public async Task<IActionResult> EditLock([FromBody] EditLockModel model)
         {
-            // check user access level
-
             try
             {
                 var @lock = await _lockRepository.GetByIdAsync(model.Id);
@@ -64,10 +64,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpDelete("delete/{id}")]
+        [Authorize(UserRoleManager.RoleAdmin)]
         public async Task<IActionResult> DeleteLock(int id)
         {
-            // check user access level
-
             try
             {
                 var result = await _lockRepository.DeleteAsync(id);
@@ -81,10 +80,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpGet("room/{id}")]
+        [Authorize(UserRoleManager.RoleAdmin, UserRoleManager.RoleManager)]
         public async Task<IActionResult> GetForRoom(int id)
         {
-            // check user access level
-
             try
             {
                 var result = await _lockRepository.GetForRoomAsync(id);

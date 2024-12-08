@@ -4,6 +4,8 @@ using DAL;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using WebAPI.Managers;
+using WebAPI.Middlewares;
 using WebAPI.Models.Document;
 
 namespace WebAPI.Controllers
@@ -22,10 +24,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost("create")]
+        [Authorize(UserRoleManager.RoleManager)]
         public async Task<IActionResult> CreateDocument([FromBody] CreateDocumentModel model)
         {
-            // check user access level
-
             var document = new Document();
             document.MapFrom(model);
             document.Added = DateTime.Now;
@@ -42,10 +43,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpDelete("delete/{id}")]
+        [Authorize(UserRoleManager.RoleManager)]
         public async Task<IActionResult> DeleteDocument(int id)
         {
-            // check user access level
-
             try
             {
                 var result = await _documentRepository.DeleteAsync(id);
@@ -58,11 +58,10 @@ namespace WebAPI.Controllers
             }
         }
 
+        // can be accessed from android
         [HttpGet("all")]
         public async Task<IActionResult> GetAll() //TODO: Add sordting and filtering
         {
-            // check user access level
-
             try
             {
                 var result = await _documentRepository.GetAllAsync();
@@ -76,10 +75,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpPut("edit")]
+        [Authorize(UserRoleManager.RoleManager)]
         public async Task<IActionResult> EditDocument([FromBody] EditDocumentModel model)
         {
-            // check user access level
-
             var docLog = new DocumentLog()
             {
                 DocumentId = model.Id,

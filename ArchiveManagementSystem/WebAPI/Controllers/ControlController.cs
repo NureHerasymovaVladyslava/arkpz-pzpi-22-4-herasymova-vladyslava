@@ -5,6 +5,8 @@ using DAL;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Reflection;
+using WebAPI.Managers;
+using WebAPI.Middlewares;
 using WebAPI.Models.Control;
 
 namespace WebAPI.Controllers
@@ -21,10 +23,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost("create")]
+        [Authorize (UserRoleManager.RoleAdmin)]
         public async Task<IActionResult> CreateControl([FromBody] CreateControlModel model)
         {
-            // check user access level
-
             var control = new Control();
             control.MapFrom(model);
             control.Working = false;
@@ -42,10 +43,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpPut("edit")]
+        [Authorize (UserRoleManager.RoleAdmin)]
         public async Task<IActionResult> EditControl([FromBody] EditControlModel model)
         {
-            // check user access level
-
             try
             {
                 var control = await _controlRepository.GetByIdAsync(model.Id);
@@ -66,10 +66,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpDelete("delete/{id}")]
+        [Authorize (UserRoleManager.RoleAdmin)]
         public async Task<IActionResult> DeleteControl(int id)
         {
-            // check user access level
-
             try
             {
                 var result = await _controlRepository.DeleteAsync(id);
@@ -83,10 +82,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpGet("room/{id}")]
+        [Authorize(UserRoleManager.RoleAdmin, UserRoleManager.RoleManager)]
         public async Task<IActionResult> GetForRoom(int id, int? typeId)
         {
-            // check user access level
-
             try
             {
                 var result = await _controlRepository.GetForRoomAsync(id, typeId);
@@ -100,9 +98,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost("turn-on/{id}")]
+        [Authorize (UserRoleManager.RoleManager)]
         public async Task<IActionResult> TurnOn(int id)
         {
-            // check user access level
             // logic for turning control device on
 
             return Ok();
@@ -132,9 +130,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost("turn-off/{id}")]
+        [Authorize (UserRoleManager.RoleManager)]
         public async Task<IActionResult> TurnOff(int id)
         {
-            // check user access level
             // logic for turning control device back off
 
             return Ok();

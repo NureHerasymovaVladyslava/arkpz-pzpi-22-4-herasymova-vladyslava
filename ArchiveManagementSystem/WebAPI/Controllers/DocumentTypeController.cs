@@ -3,6 +3,8 @@ using Core.Models;
 using DAL;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using WebAPI.Managers;
+using WebAPI.Middlewares;
 using WebAPI.Models.Document;
 
 namespace WebAPI.Controllers
@@ -19,10 +21,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost("create")]
+        [Authorize(UserRoleManager.RoleManager)]
         public async Task<IActionResult> CreateType([FromBody] string name)
         {
-            // check user access level
-
             var type = new DocumentType();
             type.Name = name;
 
@@ -39,10 +40,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpPut("edit")]
+        [Authorize(UserRoleManager.RoleManager)]
         public async Task<IActionResult> EditType([FromBody] EditDocumentTypeModel model)
         {
-            // check user access level
-
             try
             {
                 var type = await _documentTypeRepository.GetByIdAsync(model.Id);
@@ -63,10 +63,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpDelete("delete/{id}")]
+        [Authorize(UserRoleManager.RoleManager)]
         public async Task<IActionResult> DeleteType(int id)
         {
-            // check user access level
-
             try
             {
                 var result = await _documentTypeRepository.DeleteAsync(id);
@@ -79,11 +78,10 @@ namespace WebAPI.Controllers
             }
         }
 
+        // can be accessed from android
         [HttpGet("all")]
         public async Task<IActionResult> GetAll()
         {
-            // check user access level
-
             try
             {
                 var result = await _documentTypeRepository.GetAllAsync();

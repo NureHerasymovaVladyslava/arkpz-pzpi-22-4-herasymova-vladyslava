@@ -3,6 +3,8 @@ using Core.Models;
 using DAL;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using WebAPI.Managers;
+using WebAPI.Middlewares;
 using WebAPI.Models.AppUser;
 
 namespace WebAPI.Controllers
@@ -19,10 +21,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost("create")]
+        [Authorize(UserRoleManager.RoleAdmin)]
         public async Task<IActionResult> CreateRole([FromBody] string name)
         {
-            // check user access level
-
             var role = new UserRole
             {
                 Name = name
@@ -41,10 +42,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpPut("edit")]
+        [Authorize(UserRoleManager.RoleAdmin)]
         public async Task<IActionResult> EditRole([FromBody] EditUserRoleModel model)
         {
-            // check user access level
-
             try
             {
                 var role = await _userRoleRepository.GetByIdAsync(model.Id);
@@ -65,10 +65,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpDelete("delete/{id}")]
+        [Authorize(UserRoleManager.RoleAdmin)]
         public async Task<IActionResult> DeleteRole(int id)
         {
-            // check user access level
-
             try
             {
                 var result = await _userRoleRepository.DeleteAsync(id);
@@ -82,10 +81,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpGet("all")]
+        [Authorize(UserRoleManager.RoleAdmin)]
         public async Task<IActionResult> GetAll()
         {
-            // check user access level
-
             try
             {
                 var result = await _userRoleRepository.GetAllAsync();

@@ -16,29 +16,20 @@ namespace WebAPI.Controllers
     {
         private const string SessionUserIdString = "UserId";
         private readonly AppUserRepository _userRepository;
-        private readonly UserRoleManager _roleManager;
         private readonly EmailManager _emailManager;
 
         private AppUser CurrentUser { get => HttpContext.Items["User"] as AppUser; }
 
-        public AppUserController(AppUserRepository userRepository, 
-            UserRoleManager roleManager, EmailManager emailManager)
+        public AppUserController(AppUserRepository userRepository, EmailManager emailManager)
         {
             _userRepository = userRepository;
-            _roleManager = roleManager;
             _emailManager = emailManager;
         }
 
         [HttpPost("create")]
-        [Authorize]
+        [Authorize (UserRoleManager.RoleAdmin)]
         public async Task<IActionResult> CreateUser([FromBody] CreateUserModel model)
         {
-            var roleResult = await _roleManager.IsUserInRole(CurrentUser, "Admin");
-            if (!roleResult)
-            {
-                return Unauthorized();
-            }
-
             var appUser = new AppUser();
             appUser.MapFrom(model);
 
@@ -69,15 +60,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpGet("{id}")]
-        [Authorize]
+        [Authorize (UserRoleManager.RoleAdmin)]
         public async Task<IActionResult> GetUser(int id)
         {
-            var roleResult = await _roleManager.IsUserInRole(CurrentUser, "Admin");
-            if (!roleResult)
-            {
-                return Unauthorized();
-            }
-
             try
             {
                 var result = await _userRepository.GetByIdAsync(id);
@@ -95,15 +80,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpPut("edit")]
-        [Authorize]
+        [Authorize(UserRoleManager.RoleAdmin)]
         public async Task<IActionResult> EditUser([FromBody] EditUserModel model)
         {
-            var roleResult = await _roleManager.IsUserInRole(CurrentUser, "Admin");
-            if (!roleResult)
-            {
-                return Unauthorized();
-            }
-
             try
             {
                 var user = await _userRepository.GetByIdAsync(model.Id);

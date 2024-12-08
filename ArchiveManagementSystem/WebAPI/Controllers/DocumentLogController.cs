@@ -4,6 +4,8 @@ using DAL;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Reflection;
+using WebAPI.Managers;
+using WebAPI.Middlewares;
 using WebAPI.Models.Document;
 
 namespace WebAPI.Controllers
@@ -66,10 +68,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpGet("document/{id}")]
+        [Authorize(UserRoleManager.RoleManager)]
         public async Task<IActionResult> GetForDocument(int id)
         {
-            // check user access level
-
             try
             {
                 var result = await _documentLogRepository.GetForDocumentAsync(id);
@@ -83,10 +84,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpGet("requests")]
+        [Authorize(UserRoleManager.RoleManager)]
         public async Task<IActionResult> GetRequests()
         {
-            // check user access level
-
             try
             {
                 var result = await _documentLogRepository.GetUnprocessedAsync();
@@ -100,10 +100,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpPut("confirm/{id}")]
+        [Authorize(UserRoleManager.RoleManager)]
         public async Task<IActionResult> ConfirmRequest(int id)
         {
-            // check user access level
-
             try
             {
                 var docLog = await _documentLogRepository.GetByIdAsync(id);
@@ -146,10 +145,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpPut("discard/{id}")]
+        [Authorize(UserRoleManager.RoleManager)]
         public async Task<IActionResult> DiscardRequest(int id)
         {
-            // check user access level
-
             try
             {
                 var dockLog = await _documentLogRepository.GetByIdAsync(id);

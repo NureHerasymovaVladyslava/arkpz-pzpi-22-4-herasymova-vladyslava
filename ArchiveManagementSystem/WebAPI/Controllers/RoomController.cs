@@ -3,6 +3,8 @@ using Core.Models;
 using DAL;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using WebAPI.Managers;
+using WebAPI.Middlewares;
 using WebAPI.Models.Room;
 
 namespace WebAPI.Controllers
@@ -19,10 +21,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost("create")]
+        [Authorize(UserRoleManager.RoleAdmin)]
         public async Task<IActionResult> CreateRoom([FromBody] CreateRoomModel model)
         {
-            // check user access level
-
             var room = new Room();
             room.MapFrom(model);
 
@@ -39,10 +40,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize(UserRoleManager.RoleAdmin, UserRoleManager.RoleManager)]
         public async Task<IActionResult> GetRoom(int id)
         {
-            // check user access level
-
             try
             {
                 var result = await _roomRepository.GetByIdAsync(id);
@@ -60,10 +60,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpPut("edit")]
+        [Authorize(UserRoleManager.RoleAdmin)]
         public async Task<IActionResult> EditRoom([FromBody] EditRoomModel model)
         {
-            // check user access level
-
             try
             {
                 var room = await _roomRepository.GetByIdAsync(model.Id);
@@ -85,10 +84,9 @@ namespace WebAPI.Controllers
 
         // room should not contain any sensors or controls
         [HttpDelete("delete/{id}")]
+        [Authorize(UserRoleManager.RoleAdmin)]
         public async Task<IActionResult> DeleteRoom(int id)
         {
-            // check user access level
-
             try
             {
                 var result = await _roomRepository.DeleteAsync(id);
@@ -102,10 +100,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpGet("all")]
+        [Authorize(UserRoleManager.RoleAdmin, UserRoleManager.RoleManager)]
         public async Task<IActionResult> GetAll()
         {
-            // check user access level
-
             try
             {
                 var result = await _roomRepository.GetAllAsync();

@@ -3,6 +3,8 @@ using Core.Models;
 using DAL;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using WebAPI.Managers;
+using WebAPI.Middlewares;
 using WebAPI.Models.Notification;
 
 namespace WebAPI.Controllers
@@ -19,10 +21,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost("create")]
+        [Authorize(UserRoleManager.RoleManager)]
         public async Task<IActionResult> CreateNotification([FromBody] CreateNotificationModel model)
         {
-            // check user access level
-
             var notification = new Notification();
             notification.MapFrom(model);
             notification.Sent = DateTime.Now;
@@ -43,8 +44,6 @@ namespace WebAPI.Controllers
         [HttpGet("all")]
         public async Task<IActionResult> GetAll()
         {
-            // check user access level
-
             try
             {
                 var result = await _notificationRepository.GetAllAsync();
