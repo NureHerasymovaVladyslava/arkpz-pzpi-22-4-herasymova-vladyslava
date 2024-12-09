@@ -1,0 +1,436 @@
+Харківський університет радіоелектроніки
+Факультет комп'ютерних наук
+Кафедра програмної інженерії
+
+
+
+ЗВІТ
+до лабораторної роботи номер 3 з дисципліни
+"Аналіз та рефакторинг коду"
+на тему: "РОЗРОБКА БІЗНЕС-ЛОГІКИ ТА ФУНКЦІЙ АДМІНІСТРУВАННЯ СЕРВЕРНОЇ ЧАСТИНИ ПРОГРАМНОЇ СИСТЕМИ "
+
+
+
+
+Виконала ст. гр ПЗПІ-22-4
+Герасимова Владислава Андріївна
+
+Перевірив
+ст. викладач кафедри ПІ
+Сокорчук Ігор Петрович
+
+
+
+Харків 2024
+ 
+МЕТА
+	
+Метою роботи є розробити бізнес логіку та функції адміністрування серверної частини програмної системи.
+
+ХІД РОБОТИ
+	
+В ході виконання лабораторної роботи було реалізовано наступну бізнес логіку (опис інженерних рішень):
+–	Інтеграція з Gmail API для відправки листів на електронну пошту користувачів (необхідно для відправки тимчасового паролю новим користувачам та користувачам, які забули пароль та хотіли б його скинути);
+–	Хешування паролю за технологією SHA256 для його безпечнішого зберігання в базі даних;
+–	Реалізація Middleware для роботи з сесіями, зберігання поточного авторизованого користувача та обмеження доступу до функціональності платформи в залежності від ролі користувача;
+–	Виконання діагностики сенсорів певного типу в певній кімнаті базуючись на даних за певний час. Результат діагностики – середнє від відношень відхилення від середнього до цього середнього по всім сенсорам для кожного з наборів показників;
+–	Механізм сповіщення за допомогою SignalR (неможливо повноцінно продемонструвати через відсутність отримувача (веб-доданку));
+–	Бізнес логіка пов’язана із адмініструванням системи (створення резервної копії бази даних та її відновлення по існуючій резервній копії).
+Під час виконання лабораторної роботи також було сформовано UML діаграми діяльності системи для таких процесів, як відкриття смарт-замку по запиту користувача, зчитування показників з сенсорів із реагуванням на потенційні критичні значення, а також редагування інформації про документ по запиту користувача (Додаток А). Окрім цього, було сформовано UML діаграму взаємодії (послідовності) для процесу створення нового користувача та його входу в систему (Додаток Б).
+.
+ 
+ВИСНОВКИ
+
+Протягом лабораторної роботи було розроблено бізнес-логіку та функції адміністрування серверної частини програмної системи.
+Протягом лабораторної роботи також було створено UML діаграми діяльності та взаємодії (послідовності).
+ 
+ДОДАТОК А
+UML ДІАГРАМИ ДІЯЛЬНОСТІ
+
+ 
+Рис А.1. Відкриття смарт-замку по запиту користувача
+
+ 
+Рис А.2. Редагування інформації про документ по запиту користувача
+ 
+Рис А.3. Зчитування показників з сенсорів із реагуванням на потенційні критичні значення
+
+ 
+ДОДАТОК Б 
+UML ДІАГРАМА ВЗАЄМОДІЇ (ПОСЛІДОВНОСТІ) ДЛЯ ПРОЦЕСУ СТВОРЕННЯ НОВОГО КОРИСТУВАЧА ТА ЙОГО ВХОДУ В СИСТЕМУ
+
+  
+ДОДАТОК В
+ФРАГМЕНТИ ПРОГРАМНОГО КОДУ
+
+1. [HttpGet("diagnosis")]
+2. [Authorize(UserRoleManager.RoleManager)]
+3. public async Task<IActionResult> ConductDiagnosis(int roomId, SensorType sensorType, int minutes)
+4. {
+5.     try
+6.     {
+7.         if (minutes > 120)
+8.         {
+9.             return BadRequest();
+10.         }
+11.         var sensors = await _sensorRepository.GetForRoomAsync(roomId, sensorType);
+12.         var sensorLogs = new Dictionary<int, float[]>();
+13. 
+14.         var avgArray = new float[minutes];
+15.         var valuesCount = new int[minutes];
+16. 
+17.         foreach (var sensor in sensors)
+18.         {
+19.             var logs = await _sensorLogRepository.GetForSensorAsync(sensor.Id);
+20.             var values = logs.Take(minutes).Select(l => l.Value).ToArray();
+21.             sensorLogs.Add(sensor.Id, values);
+22. 
+23.             for (int i = 0; i < values.Length; i++)
+24.             {
+25.                 avgArray[i] += values[i];
+26.                 valuesCount[i]++;
+27.             }
+28.         }
+29. 
+30.         for (int i = 0; i < avgArray.Length; i++)
+31.         {
+32.             if (valuesCount[i] == 0)
+33.             {
+34.                 break;
+35.             }
+36. 
+37.             avgArray[i] /= valuesCount[i];
+38.         }
+39. 
+40.         var diagnosisResults = new List<SensorDiagnosisResult>();
+41. 
+42.         foreach (var sensor in sensors)
+43.         {
+44.             var diagnosisResult = new SensorDiagnosisResult() { Id = sensor.Id };
+45.             float devSum = 0;
+46. 
+47.             for (int i = 0; i < sensorLogs[sensor.Id].Length; i++)
+48.             {
+49.                 var dif = (sensorLogs[sensor.Id][i] - avgArray[i]) / avgArray[i];
+50. 
+51.                 if (dif > 0)
+52.                 {
+53.                     devSum += dif;
+54.                 }
+55.                 else
+56.                 {
+57.                     devSum -= dif;
+58.                 }
+59.             }
+60. 
+61.             diagnosisResult.FailProbability = devSum / sensorLogs[sensor.Id].Length;
+62. 
+63.             diagnosisResults.Add(diagnosisResult);
+64.         }
+65. 
+66.         return Ok(diagnosisResults);
+67.     }
+68.     catch (Exception ex)
+69.     {
+70.         return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+71.     }
+72. }
+
+
+
+1. public class EmailManager
+2. {
+3.     private readonly ILogger<EmailManager> _logger;
+4.     private readonly EmailSettings _settings;
+5. 
+6.     private readonly Dictionary<EmailType, string> _emailBody = new()
+7.     {
+8.         { EmailType.NewUser,
+9.             @"<html>
+10.                 <h2>Dear {0}!</h2></hr>
+11.                 <p>You were registered in ArchiveManagementSystem!</p>
+12.                 <p>Bellow is your temporary password for accessing your account. 
+13.                 It is advisable that you do not share it with anyone and change it as soon as possible to guarantee the security of your account.</p>
+14.                 <p>Your temporary password: {1}</p>
+15.                 </hr>
+16.                 <i>Best regardes, ArchiveManagementSystem</i>
+17.                 </html>"
+18.         },
+19.         { EmailType.PasswordReset,
+20.             @"<html>
+21.                 <h2>Dear {0}!</h2></hr>
+22.                 <p>You requested a password reset for your account in ArchiveManagementSystem!</p>
+23.                 <p>Bellow is your new temporary password for accessing your account. 
+24.                 It is advisable that you do not share it with anyone and change it as soon as possible to guarantee the security of your account.</p>
+25.                 <p>Your new temporary password: {1}</p>
+26.                 </hr>
+27.                 <i>Best regardes, ArchiveManagementSystem</i>
+28.                 </html>"
+29.         },
+30.     };
+31. 
+32.     private readonly Dictionary<EmailType, string> _emailSubject = new()
+33.     {
+34.         { EmailType.NewUser, "Welcome to ArchiveManagementSystem"},
+35.         { EmailType.PasswordReset, "Password reset requested"},
+36.     };
+37. 
+38.     public EmailManager(IOptions<EmailSettings> settings, ILogger<EmailManager> logger)
+39.     {
+40.         _settings = settings.Value;
+41.         _logger = logger;
+42.     }
+43. 
+44.     public async Task<bool> SendNewUserEmail(string fullName, string tempPassword, string userEmail)
+45.     {
+46.         var emailBody = string.Format(_emailBody[EmailType.NewUser], fullName, tempPassword);
+47.         var emailSubject = _emailSubject[EmailType.NewUser];
+48. 
+49.         var email = FormEmailAsync(userEmail, emailSubject, emailBody);
+50.         if (email == null)
+51.         {
+52.             return false;
+53.         }
+54. 
+55.         return await SendEmailAsync(email);
+56.     }
+57. 
+58.     public async Task<bool> SendPasswordResetEmail(string fullName, string tempPassword, string userEmail)
+59.     {
+60.         var emailBody = string.Format(_emailBody[EmailType.PasswordReset], fullName, tempPassword);
+61.         var emailSubject = _emailSubject[EmailType.PasswordReset];
+62. 
+63.         var email = FormEmailAsync(userEmail, emailSubject, emailBody);
+64.         if (email == null)
+65.         {
+66.             return false;
+67.         }
+68. 
+69.         return await SendEmailAsync(email);
+70.     }
+71. 
+72.     private MimeMessage FormEmailAsync(string toEmail, string subject, string body)
+73.     {
+74.         _logger.LogInformation("Forming email");
+75. 
+76.         if (string.IsNullOrWhiteSpace(toEmail))
+77.         {
+78.             _logger.LogError("Failed to form email - no destination was given");
+79. 
+80.             return null;
+81.         }
+82. 
+83.         if (string.IsNullOrWhiteSpace(subject))
+84.         {
+85.             _logger.LogError("Failed to form email - no subject was given");
+86. 
+87.             return null;
+88.         }
+89. 
+90.         if (string.IsNullOrWhiteSpace(body))
+91.         {
+92.             _logger.LogError("Failed to form email - no body was given");
+93. 
+94.             return null;
+95.         }
+96. 
+97.         var message = new MimeMessage();
+98. 
+99.         message.From.Add(new MailboxAddress(_settings.DisplayName, _settings.From));
+100.         message.To.Add(MailboxAddress.Parse(toEmail));
+101.         message.Subject = subject;
+102.         message.Body = new TextPart("html")
+103.         {
+104.             Text = body
+105.         };
+106. 
+107.         _logger.LogInformation("Email formed successfully");
+108. 
+109.         return message;
+110.     }
+111. 
+112.     private async Task<bool> SendEmailAsync(MimeMessage message)
+113.     {
+114.         _logger.LogInformation("Sending email: {subject}", message.Subject);
+115. 
+116.         var smtp = new SmtpClient();
+117. 
+118.         try
+119.         {
+120.             if (_settings.UseStartTls)
+121.             {
+122.                 await smtp.ConnectAsync(_settings.Host, _settings.Port, SecureSocketOptions.StartTls);
+123.             }
+124.             else if (_settings.UseSSL)
+125.             {
+126.                 await smtp.ConnectAsync(_settings.Host, _settings.Port, SecureSocketOptions.SslOnConnect);
+127.             }
+128. 
+129. 
+130.             await smtp.AuthenticateAsync(_settings.UserName, _settings.Password);
+131.             await smtp.SendAsync(message);
+132. 
+133.             _logger.LogInformation("Email sent successfully");
+134. 
+135.             await smtp.DisconnectAsync(true);
+136. 
+137.             return true;
+138.         }
+139.         catch (Exception ex)
+140.         {
+141.             _logger.LogError("Failed to send email! Error: {error}", ex.Message);
+142. 
+143.             return false;
+144.         }
+145.         finally
+146.         {
+147.             smtp.Dispose();
+148.         }
+149.     }
+150. }
+
+
+
+1. public class DatabaseAdminManager
+2. {
+3.     private readonly string _connectionString;
+4. 
+5.     public DatabaseAdminManager(IConfiguration config)
+6.     {
+7.         _connectionString = config.GetConnectionString("MasterConnectionString");
+8.     }
+9. 
+10.     public async Task BackupDatabaseAsync(string backupPath)
+11.     {
+12.         using var connection = new SqlConnection(_connectionString);
+13. 
+14.         var sql = @"BACKUP DATABASE [ArchiveManagementSystem]
+15.         TO DISK = @backupPath
+16.         WITH FORMAT, INIT;";
+17. 
+18.         await connection.ExecuteAsync(sql, new { backupPath });
+19.     }
+20. 
+21.     public async Task RestoreDatabaseAsync(string backupPath)
+22.     {
+23.         using var connection = new SqlConnection(_connectionString);
+24. 
+25.         var checkDatabaseExistsSql = $@"
+26.         SELECT COUNT(*) 
+27.         FROM sys.databases 
+28.         WHERE name = 'ArchiveManagementSystem'";
+29. 
+30.         var disableConnectionsSql = $@"USE [master];
+31.         ALTER DATABASE [ArchiveManagementSystem] 
+32.         SET SINGLE_USER WITH ROLLBACK IMMEDIATE;";
+33. 
+34.         var restoreSql = $@"USE [master];
+35.         RESTORE DATABASE [ArchiveManagementSystem]
+36.         FROM DISK = @backupPath
+37.         WITH REPLACE;";
+38. 
+39.         var enableConnectionsSql = $@"USE [master];
+40.         ALTER DATABASE [ArchiveManagementSystem] 
+41.         SET MULTI_USER;";
+42. 
+43.         var databaseExists = await connection
+44.             .ExecuteScalarAsync<int>(checkDatabaseExistsSql) > 0;
+45. 
+46.         if (databaseExists)
+47.         {
+48.             await connection.ExecuteAsync(disableConnectionsSql);
+49.         }
+50. 
+51.         await connection.ExecuteAsync(restoreSql, new { backupPath });
+52. 
+53.         if (databaseExists)
+54.         {
+55.             await connection.ExecuteAsync(enableConnectionsSql);
+56.         }
+57.     }
+58. }
+
+
+
+1. public class SessionMiddleware
+2. {
+3.     private readonly RequestDelegate _next;
+4. 
+5.     public SessionMiddleware(RequestDelegate next)
+6.     {
+7.         _next = next;
+8.     }
+9. 
+10.     public async Task InvokeAsync(HttpContext context, AppUserRepository userRepository)
+11.     {
+12.         var userId = context.Session.GetInt32("UserId");
+13.         if (userId.HasValue)
+14.         {
+15.             var user = await userRepository.GetByIdAsync(userId.Value);
+16.             if (user != null)
+17.             {
+18.                 context.Items["User"] = user;
+19.             }
+20.         }
+21. 
+22.         await _next(context);
+23.     }
+24. }
+
+
+
+1. [AttributeUsage(AttributeTargets.Method)]
+2. public class AuthorizeAttribute : Attribute
+3. {
+4.     public string[] Roles { get; }
+5. 
+6.     public AuthorizeAttribute(params string[] roles)
+7.     {
+8.         Roles = roles;
+9.     }
+10. }
+11. 
+12. public class AuthorizationMiddleware
+13. {
+14.     private readonly RequestDelegate _next;
+15. 
+16.     public AuthorizationMiddleware(RequestDelegate next)
+17.     {
+18.         _next = next;
+19.     }
+20. 
+21.     public async Task InvokeAsync(HttpContext context, UserRoleManager userRoleManager)
+22.     {
+23.         var endpoint = context.GetEndpoint();
+24. 
+25.         var authorizeAttribute = endpoint?.Metadata.GetMetadata<AuthorizeAttribute>();
+26. 
+27.         if (authorizeAttribute != null)
+28.         {
+29.             var user = context.Items["User"] as AppUser;
+30. 
+31.             if (user == null)
+32.             {
+33.                 context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+34.                 await context.Response.WriteAsync("Unauthorized: Please log in.");
+35.                 return;
+36.             }
+37. 
+38.             if (authorizeAttribute.Roles.Length > 0)
+39.             {
+40.                 if (!(await userRoleManager.IsUserInRoles(user, authorizeAttribute.Roles)))
+41.                 {
+42.                     context.Response.StatusCode = StatusCodes.Status403Forbidden;
+43.                     await context.Response.WriteAsync("Forbidden: You do not have the required role.");
+44.                     return;
+45.                 }
+46.             }
+47.         }
+48. 
+49.         await _next(context);
+50.     }
+51. }  
+ДОДАТОК Г
+ВІДЕО НА ЮТУБ
+
+https://youtu.be/9qqN6PueQX4
