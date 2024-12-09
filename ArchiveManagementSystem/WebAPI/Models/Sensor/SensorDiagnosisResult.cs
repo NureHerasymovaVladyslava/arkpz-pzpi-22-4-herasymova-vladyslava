@@ -2,7 +2,7 @@
 {
     public class SensorDiagnosisResult
     {
-        public int Id;
-        public float FailProbability;
+        public int Id { get; set; }
+        public float FailProbability { get; set; }
     }
 }

@@ -65,8 +65,8 @@ namespace WebAPI.Controllers
             try
             {
                 var result = await _documentRepository
-                    .GetDocumentsAsync(model.SearchQuery, model.RoomId, 
-                    model.StatusId, model.TypeId, model.OrderBy);
+                    .GetDocumentsAsync(model.RoomId, model.StatusId, 
+                    model.TypeId, model.SearchQuery, model.OrderBy);
 
                 return Ok(result);
             }

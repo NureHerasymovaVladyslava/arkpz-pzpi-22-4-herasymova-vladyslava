@@ -24,7 +24,7 @@ namespace WebAPI.Middlewares
             _next = next;
         }
 
-        public async Task InvokeAsync(HttpContext context)
+        public async Task InvokeAsync(HttpContext context, UserRoleManager userRoleManager)
         {
             var endpoint = context.GetEndpoint();
 
@@ -43,16 +43,6 @@ namespace WebAPI.Middlewares
 
                 if (authorizeAttribute.Roles.Length > 0)
                 {
-
-                    var userRoleManager = context.RequestServices.GetService<UserRoleManager>();
-
-                    if (userRoleManager == null)
-                    {
-                        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-                        await context.Response.WriteAsync("Internal Server Error: Role manager is not available.");
-                        return;
-                    }
-
                     if (!(await userRoleManager.IsUserInRoles(user, authorizeAttribute.Roles)))
                     {
                         context.Response.StatusCode = StatusCodes.Status403Forbidden;

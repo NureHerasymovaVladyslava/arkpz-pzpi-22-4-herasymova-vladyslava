@@ -22,7 +22,7 @@ namespace WebAPI.Managers
             var userRole = await _userRoleRepository.GetByIdAsync(user.RoleId);
             foreach (var role in roles)
             {
-                if (role.Equals(userRole))
+                if (role == userRole.Name)
                 {
                     return true;
                 }

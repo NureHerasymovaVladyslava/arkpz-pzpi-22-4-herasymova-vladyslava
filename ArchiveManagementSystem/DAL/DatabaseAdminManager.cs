@@ -16,7 +16,7 @@ namespace DAL
 
         public DatabaseAdminManager(IConfiguration config)
         {
-            _connectionString = config.GetConnectionString("DBConnectionString");
+            _connectionString = config.GetConnectionString("MasterConnectionString");
         }
 
         public async Task BackupDatabaseAsync(string backupPath)
@@ -39,16 +39,16 @@ namespace DAL
             FROM sys.databases 
             WHERE name = 'ArchiveManagementSystem'";
 
-            var disableConnectionsSql = $@"
+            var disableConnectionsSql = $@"USE [master];
             ALTER DATABASE [ArchiveManagementSystem] 
             SET SINGLE_USER WITH ROLLBACK IMMEDIATE;";
 
-            var restoreSql = $@"
+            var restoreSql = $@"USE [master];
             RESTORE DATABASE [ArchiveManagementSystem]
-            FROM DISK = '@backupPath'
+            FROM DISK = @backupPath
             WITH REPLACE;";
 
-            var enableConnectionsSql = $@"
+            var enableConnectionsSql = $@"USE [master];
             ALTER DATABASE [ArchiveManagementSystem] 
             SET MULTI_USER;";
 

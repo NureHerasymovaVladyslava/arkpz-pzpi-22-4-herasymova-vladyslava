@@ -98,7 +98,7 @@ namespace WebAPI.Controllers
         }
 
         [HttpGet("diagnosis")]
-        [Authorize(UserRoleManager.RoleManager)]
+        //[Authorize(UserRoleManager.RoleManager)]
         public async Task<IActionResult> ConductDiagnosis(int roomId, SensorType sensorType, int minutes)
         {
             try
@@ -145,7 +145,7 @@ namespace WebAPI.Controllers
 
                     for (int i = 0; i < sensorLogs[sensor.Id].Length; i++)
                     {
-                        var dif = sensorLogs[sensor.Id][i] - avgArray[i];
+                        var dif = (sensorLogs[sensor.Id][i] - avgArray[i]) / avgArray[i];
 
                         if (dif > 0)
                         {

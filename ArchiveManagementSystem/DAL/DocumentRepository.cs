@@ -24,8 +24,8 @@ namespace DAL
         {
         }
 
-        public async Task<IEnumerable<Document>> GetDocumentsAsync(string searchQuery = "", 
-            int? roomId, int? statusId, int? typeId, OrderBy orderBy = OrderBy.CreatedDesc)
+        public async Task<IEnumerable<Document>> GetDocumentsAsync(int? roomId, int? statusId, 
+            int? typeId, string searchQuery = "", OrderBy orderBy = OrderBy.CreatedDesc)
         {
             using var connection = new SqlConnection(_connectionString);
             var sql = new StringBuilder($"SELECT * FROM Document WHERE Name LIKE '%{searchQuery}%'");

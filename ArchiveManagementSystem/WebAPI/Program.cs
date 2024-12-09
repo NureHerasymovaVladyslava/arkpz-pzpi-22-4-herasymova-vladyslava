@@ -46,6 +46,8 @@ namespace WebAPI
                 options.Cookie.IsEssential = true;
             });
 
+            builder.Services.AddSignalR();
+
             var app = builder.Build();
 
             app.UseRouting();
