@@ -54,8 +54,9 @@ namespace WebAPI.Controllers
 
                 if (sensor.RoomId == null)
                 {
-                    return NotFound();
+                    return Ok(result);
                 }
+
                 var room = await _roomRepository.GetByIdAsync((int)sensor.RoomId);
                 if (room == null)
                 {

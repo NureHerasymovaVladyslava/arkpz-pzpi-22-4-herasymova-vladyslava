@@ -77,8 +77,6 @@ void loop() {
 
   delaySecs++;
   delay(100);
-  Serial.print("Delay secs: ");
-  Serial.println(delaySecs);
 }
 
 void sensorFunctionality() {

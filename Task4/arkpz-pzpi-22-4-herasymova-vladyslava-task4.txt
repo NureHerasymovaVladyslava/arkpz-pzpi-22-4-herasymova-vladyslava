@@ -1,0 +1,475 @@
+Харківський університет радіоелектроніки
+Факультет комп'ютерних наук
+Кафедра програмної інженерії
+
+
+
+ЗВІТ
+до лабораторної роботи номер 4 з дисципліни
+"Аналіз та рефакторинг коду"
+на тему: " РОЗРОБКА IoT КЛІЄНТА 
+(БІЗНЕС-ЛОГІКИ ТА ФУНКЦІЙ НАЛАШТУВАННЯ) "
+
+
+
+
+Виконала ст. гр ПЗПІ-22-4
+Герасимова Владислава Андріївна
+
+Перевірив
+ст. викладач кафедри ПІ
+Сокорчук Ігор Петрович
+
+
+
+Харків 2024
+ 
+1 МЕТА
+	
+Метою роботи є розробити програмне забезпечення для  IoT або SmartDevice пристрою, створеного на базі будь-якої поширеної на  сьогодні платформи, придатної для реалізації вбудованих систем (Embedded  System), для програмної системи для управління архівом цінних паперів.
+
+2 ХІД РОБОТИ
+	
+Протягом виконання лабораторної роботи було розроблено програмне забезпечення для IoT пристроїв, які є частиною програмної системи для управління архівом цінних паперів (див. Додаток В).
+Опис інженерних рішень:
+–	Сенсор температури:
+•	Мікроконтроллер ESP32;
+•	Датчик вологості та температури DHT22;
+•	2 тактові кнопки (реєстрація девайсу + включення / виключення девайсу);
+–	Сенсор вологості:
+•	Мікроконтроллер ESP32;
+•	Датчик вологості та температури DHT22;
+•	2 тактові кнопки (реєстрація девайсу + включення / виключення девайсу).
+–	Сенсор освітлення:
+•	Мікроконтроллер ESP32;
+•	Фоторезистор LDR;
+•	2 тактові кнопки (реєстрація девайсу + включення / виключення девайсу);
+–	Елемент управління температурою:
+•	Мікроконтроллер ESP32;
+•	Світлодіод (для імітації роботи девайсу);
+•	Резистор;
+•	2 тактові кнопки (реєстрація девайсу + включення / виключення девайсу);
+–	Елемент управління освітленням:
+•	Мікроконтроллер ESP32;
+•	Світлодіод (для імітації роботи девайсу);
+•	Резистор;
+•	2 тактові кнопки (реєстрація девайсу + включення / виключення девайсу);
+–	Елемент управління вологістю:
+•	Мікроконтроллер ESP32;
+•	Світлодіод (для імітації роботи девайсу);
+•	Резистор;
+•	2 тактові кнопки (реєстрація девайсу + включення / виключення девайсу);
+–	Смарт-замок:
+•	Мікроконтроллер ESP32;
+•	Світлодіод (для імітації роботи девайсу);
+•	Резистор;
+•	2 тактові кнопки (реєстрація девайсу + включення / виключення девайсу);
+–	Зв’язок з локальним сервером – за допомогою dev tunnels;
+–	Середа розробки та емуляції дії пристроїв: https://wokwi.com.
+Перед реалізацією програмного коду девайсів було реалізовано UML діаграми прецедентів та діяльності для них (див. Додатки А-Б).
+Бізнес логіка IoT клієнтів пов’язана із зчитуванням даних з сенсорів, обміном повідомленнями із сервером та включення / виключення девайсів – складових IoT клієнтів. Математична обробка даних включає переведення вимірюваних аналогових даних до люксів для сенсорів освітлення.
+Налаштування IoT клієнтів включає їх реєстрацію в системі, їх вмикання та вимикання, а також редагування пов’язаних з ними даних у системі менеджером.
+
+ 
+ВИСНОВКИ
+
+Протягом лабораторної роботи було побудовано діаграми прецедентів та діяльності для таких IoT девайсів, як смарт-замок і сенсори та елементи управління вологістю, освітленням та температурою (див. Додатки А-Б). На базі цих діаграм було реалізовано програмний код для зазначених раніше девайсів (див. Додаток В). 
+ДОДАТОК А
+UML ДІАГРАМИ ПРЕЦЕДЕНТІВ
+
+ 
+Рисунок А.1 – Діаграма прецедентів для смарт-замку
+
+ 
+Рисунок А.2 – Діаграма прецедентів для сенсорів
+ 
+Рисунок А.3 – Діаграма прецедентів для елементів управління
+
+ 
+ДОДАТОК Б 
+UML ДІАГРАМИ ДІЯЛЬНОСТІ
+
+ 
+Рисунок Б.1 – Діаграма діяльності для елементів управління
+
+ 
+Рисунок Б.2 – Діаграма діяльності для смарт-замку управління  
+ДОДАТОК В
+ФРАГМЕНТИ ПРОГРАМНОГО КОДУ
+
+1 #include <WiFi.h>
+2 #include <HTTPClient.h>
+3 #include <NetworkClientSecure.h>
+4 #include <EEPROM.h>
+5 #include "DHT.h"
+6 
+7 #define DHTPIN 15
+8 #define DHTTYPE DHT22
+9 #define BUTTON_REGISTER_PIN 16
+10 #define BUTTON_TURN_ON_OFF_PIN 17
+11 #define WIFI_SSID "Wokwi-GUEST"
+12 #define WIFI_PASSWORD ""
+13 #define SENSOR_TYPE "1"
+14 
+15 #define EEPROM_SIZE 5
+16 #define DEVICE_ID_ADDR 0
+17 #define WORKING_STATE_ADDR 4
+18 
+19 int sensorId = -1;
+20 bool isWorking = false;
+21 int delaySecs = 0;
+22 
+23 String serverUrl = "https://tdvjj1ts-7089.euw.devtunnels.ms/api";
+24 String createSensorUrl = "/Sensor/create";
+25 String createSensorLogUrl = "/SensorLog/create";
+26 
+27 DHT dht(DHTPIN, DHTTYPE);
+28 
+29 int readDeviceIdFromEEPROM();
+30 bool readWorkingStateFromEEPROM();
+31 void registerDevice();
+32 void toggleWorkingState();
+33 void sensorFunctionality();
+34 
+35 void setup() {
+36   Serial.begin(115200);
+37 
+38   EEPROM.begin(EEPROM_SIZE);
+39 
+40   sensorId = readDeviceIdFromEEPROM();
+41   if (sensorId != -1) {
+42     Serial.print("Device ID loaded from EEPROM: ");
+43     Serial.println(sensorId);
+44   } else {
+45     Serial.println("No device ID found. Please press the button to register.");
+46   }
+47 
+48   isWorking = readWorkingStateFromEEPROM();
+49 
+50   dht.begin();
+51 
+52   pinMode(BUTTON_REGISTER_PIN, INPUT_PULLUP);
+53   pinMode(BUTTON_TURN_ON_OFF_PIN, INPUT_PULLUP);
+54 
+55   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+56 
+57   while (WiFi.status() != WL_CONNECTED) {
+58     delay(1000);
+59     Serial.println("Connecting to WiFi...");
+60   }
+61   Serial.println("Connected to WiFi");
+62 }
+63 
+64 void loop() {
+65   if (digitalRead(BUTTON_REGISTER_PIN) == LOW) {
+66     Serial.println("Button Pressed! Registering device...");
+67     registerDevice();
+68     delaySecs++;
+69     delay(100);
+70   }
+71   if (digitalRead(BUTTON_TURN_ON_OFF_PIN) == LOW) {
+72     Serial.println("Button Pressed! Changing device state...");
+73     toggleWorkingState();
+74     delaySecs++;
+75     delay(100);
+76   }
+77 
+78   if (sensorId != -1 && isWorking && delaySecs >= 300) {
+79     delaySecs = 0;
+80     sensorFunctionality();
+81   }
+82 
+83   delaySecs++;
+84   delay(100);
+85 }
+86 
+87 void sensorFunctionality() {
+88   if (WiFi.status() == WL_CONNECTED) {
+89     HTTPClient http;
+90     http.begin(serverUrl + createSensorLogUrl);
+91 
+92     float temperature = dht.readTemperature();
+93 
+94     if (isnan(temperature)) {
+95       Serial.println("Failed to read from DHT sensor!");
+96       return;
+97     }
+98 
+99     Serial.println(temperature);
+100 
+101     String jsonPayload = String("{\"sensorId\": ") +
+102                          String(sensorId) +
+103                          String(", \"value\": ") +
+104                          String(temperature) +
+105                          String("}");
+106 
+107     http.addHeader("Content-Type", "application/json");
+108     int httpResponseCode = http.POST(jsonPayload);
+109 
+110     if (httpResponseCode > 0) {
+111       Serial.println("Data sent successfully: " + String(httpResponseCode));
+112     } else {
+113       Serial.println("Error sending data: " + String(http.errorToString(httpResponseCode).c_str()));
+114     }
+115 
+116     http.end();
+117   } else {
+118     Serial.println("WiFi not connected");
+119   }
+120 }
+121 
+122 void registerDevice() {
+123   if (sensorId != -1) {
+124     Serial.println("Device is already registered.");
+125     Serial.print("Device ID: ");
+126     Serial.println(sensorId);
+127     return;
+128   }
+129   if (WiFi.status() == WL_CONNECTED) {
+130     HTTPClient http;
+131     http.begin(serverUrl + createSensorUrl);
+132     http.addHeader("Content-Type", "application/json");
+133 
+134     int httpResponseCode = http.POST(SENSOR_TYPE);
+135 
+136     if (httpResponseCode == 200) {
+137       String response = http.getString();
+138       sensorId = response.toInt();
+139 
+140       for (int i = 0; i < EEPROM_SIZE; i++) {
+141         EEPROM.write(DEVICE_ID_ADDR + i, (sensorId >> (i * 8)) & 0xFF);
+142       }
+143       EEPROM.commit();
+144       Serial.println("Device ID stored in EEPROM.");
+145 
+146       Serial.println("Device registered successfully!");
+147       Serial.print("Device ID: ");
+148       Serial.println(sensorId);
+149     } else {
+150       Serial.print("Failed to register device, HTTP code: ");
+151       Serial.println(httpResponseCode);
+152     }
+153     http.end();
+154   } else {
+155     Serial.println("WiFi not connected!");
+156   }
+157 }
+158 
+159 int readDeviceIdFromEEPROM() {
+160   int id = 0;
+161   for (int i = 0; i < EEPROM_SIZE; i++) {
+162     id |= (EEPROM.read(DEVICE_ID_ADDR + i) << (i * 8));
+163   }
+164 
+165   if (id == 0xFFFFFFFF || id == 0) {
+166     return -1;
+167   }
+168   return id;
+169 }
+170 
+171 void toggleWorkingState() {
+172   if (sensorId == -1) {
+173     Serial.println("Device is not registered.");
+174     Serial.println("Working state change canceled");
+175     return;
+176   }
+177   isWorking = !isWorking;
+178   EEPROM.write(WORKING_STATE_ADDR, isWorking ? 1 : 0);
+179   EEPROM.commit();
+180   Serial.println("Working state stored in EEPROM.");
+181 
+182   Serial.print("Device working state changed to: ");
+183   Serial.println(isWorking ? "On" : "Off");
+184 }
+185 
+186 bool readWorkingStateFromEEPROM() {
+187   return EEPROM.read(WORKING_STATE_ADDR) == 1;
+188 }
+
+1 #include <WiFi.h>
+2 #include <HTTPClient.h>
+3 #include <NetworkClientSecure.h>
+4 #include <EEPROM.h>
+5 
+6 #define LED_PIN 18
+7 #define BUTTON_REGISTER_PIN 16
+8 #define BUTTON_TURN_ON_OFF_PIN 17
+9 #define WIFI_SSID "Wokwi-GUEST"
+10 #define WIFI_PASSWORD ""
+11 #define SENSOR_TYPE "1"
+12 
+13 #define EEPROM_SIZE 5
+14 #define DEVICE_ID_ADDR 0
+15 #define WORKING_STATE_ADDR 4
+16 
+17 int deviceId = -1;
+18 bool isWorking = false;
+19 int delaySecs = 0;
+20 
+21 String serverUrl = "https://tdvjj1ts-7089.euw.devtunnels.ms/api";
+22 String createControlUrl = "/Control/create";
+23 String checkStateUrl = "/Control/check-state/";
+24 
+25 int readDeviceIdFromEEPROM();
+26 bool readWorkingStateFromEEPROM();
+27 void registerDevice();
+28 void toggleWorkingState();
+29 void sensorFunctionality();
+30 
+31 void setup() {
+32   Serial.begin(115200);
+33 
+34   EEPROM.begin(EEPROM_SIZE);
+35 
+36   deviceId = readDeviceIdFromEEPROM();
+37   if (deviceId != -1) {
+38     Serial.print("Device ID loaded from EEPROM: ");
+39     Serial.println(deviceId);
+40   } else {
+41     Serial.println("No device ID found. Please press the button to register.");
+42   }
+43 
+44   isWorking = readWorkingStateFromEEPROM();
+45 
+46   pinMode(BUTTON_REGISTER_PIN, INPUT_PULLUP);
+47   pinMode(BUTTON_TURN_ON_OFF_PIN, INPUT_PULLUP);
+48   pinMode(LED_PIN, OUTPUT);
+49 
+50   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+51 
+52   while (WiFi.status() != WL_CONNECTED) {
+53     delay(1000);
+54     Serial.println("Connecting to WiFi...");
+55   }
+56   Serial.println("Connected to WiFi");
+57 }
+58 
+59 void loop() {
+60   if (digitalRead(BUTTON_REGISTER_PIN) == LOW) {
+61     Serial.println("Button Pressed! Registering device...");
+62     registerDevice();
+63     delaySecs++;
+64     delay(100);
+65   }
+66   if (digitalRead(BUTTON_TURN_ON_OFF_PIN) == LOW) {
+67     Serial.println("Button Pressed! Changing device state...");
+68     toggleWorkingState();
+69     delaySecs++;
+70     delay(100);
+71   }
+72 
+73   if (deviceId != -1 && isWorking && delaySecs >= 100) {
+74     delaySecs = 0;
+75     sensorFunctionality();
+76   }
+77 
+78   delaySecs++;
+79   delay(100);
+80   Serial.print("Delay secs: ");
+81   Serial.println(delaySecs);
+82 }
+83 
+84 void sensorFunctionality() {
+85   if (WiFi.status() == WL_CONNECTED) {
+86     HTTPClient http;
+87     http.begin(serverUrl + checkStateUrl + String(deviceId));
+88     int httpResponseCode = http.GET();
+89 
+90     if (httpResponseCode == 200) {
+91       String response = http.getString();
+92       bool turnedOn = response == "true";
+93       Serial.print("Device is On: ");
+94       Serial.println(turnedOn);
+95 
+96       if (turnedOn) {
+97         digitalWrite(LED_PIN, HIGH);
+98       }
+99       else {
+100         digitalWrite(LED_PIN, LOW);
+101       }
+102     } else {
+103       Serial.print("Failed to register device state, HTTP code: ");
+104       Serial.println(httpResponseCode);
+105     }
+106 
+107     http.end();
+108   } else {
+109     Serial.println("WiFi not connected");
+110   }
+111 }
+112 
+113 void registerDevice() {
+114   if (deviceId != -1) {
+115     Serial.println("Device is already registered.");
+116     Serial.print("Device ID: ");
+117     Serial.println(deviceId);
+118     return;
+119   }
+120   if (WiFi.status() == WL_CONNECTED) {
+121     HTTPClient http;
+122     http.begin(serverUrl + createControlUrl);
+123     http.addHeader("Content-Type", "application/json");
+124 
+125     int httpResponseCode = http.POST(SENSOR_TYPE);
+126 
+127     if (httpResponseCode == 200) {
+128       String response = http.getString();
+129       deviceId = response.toInt();
+130 
+131       for (int i = 0; i < EEPROM_SIZE; i++) {
+132         EEPROM.write(DEVICE_ID_ADDR + i, (deviceId >> (i * 8)) & 0xFF);
+133       }
+134       EEPROM.commit();
+135       Serial.println("Device ID stored in EEPROM.");
+136 
+137       Serial.println("Device registered successfully!");
+138       Serial.print("Device ID: ");
+139       Serial.println(deviceId);
+140     } else {
+141       Serial.print("Failed to register device, HTTP code: ");
+142       Serial.println(httpResponseCode);
+143     }
+144     http.end();
+145   } else {
+146     Serial.println("WiFi not connected!");
+147   }
+148 }
+149 
+150 int readDeviceIdFromEEPROM() {
+151   int id = 0;
+152   for (int i = 0; i < EEPROM_SIZE; i++) {
+153     id |= (EEPROM.read(DEVICE_ID_ADDR + i) << (i * 8));
+154   }
+155 
+156   if (id == 0xFFFFFFFF || id == 0) {
+157     return -1;
+158   }
+159   return id;
+160 }
+161 
+162 void toggleWorkingState() {
+163   if (deviceId == -1) {
+164     Serial.println("Device is not registered.");
+165     Serial.println("Working state change canceled");
+166     return;
+167   }
+168   isWorking = !isWorking;
+169   if (!isWorking) {
+170     digitalWrite(LED_PIN, LOW);
+171   }
+172   EEPROM.write(WORKING_STATE_ADDR, isWorking ? 1 : 0);
+173   EEPROM.commit();
+174   Serial.println("Working state stored in EEPROM.");
+175 
+176   Serial.print("Device working state changed to: ");
+177   Serial.println(isWorking ? "On" : "Off");
+178 }
+179 
+180 bool readWorkingStateFromEEPROM() {
+181   return EEPROM.read(WORKING_STATE_ADDR) == 1;
+182 }  
+
+ДОДАТОК Г
+ВІДЕО НА ЮТУБ
+
+https://youtu.be/mcW-aAR7dv4

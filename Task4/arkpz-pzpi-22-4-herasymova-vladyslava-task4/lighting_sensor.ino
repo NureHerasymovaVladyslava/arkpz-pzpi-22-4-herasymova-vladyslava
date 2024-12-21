@@ -72,7 +72,7 @@ void loop() {
     delay(100);
   }
 
-  if (sensorId != -1 && isWorking && delaySecs >= 30) {
+  if (sensorId != -1 && isWorking && delaySecs >= 300) {
     delaySecs = 0;
     sensorFunctionality();
   }
