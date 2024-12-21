@@ -14,6 +14,7 @@ namespace Core.Models
         public int LockId { get; set; }
         public int UserId { get; set; }
         public DateTime LogTime { get; set; }
+        public DateTime? ApprovedTime { get; set; }
         public bool? Approved { get; set; }
     }
 }

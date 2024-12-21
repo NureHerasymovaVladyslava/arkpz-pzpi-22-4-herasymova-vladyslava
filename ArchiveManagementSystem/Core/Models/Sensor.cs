@@ -12,7 +12,7 @@ namespace Core.Models
     public class Sensor
     {
         public int Id { get; set; }
-        public int RoomId { get; set; }
-        public SensorType SensorType { get; set; }
+        public int? RoomId { get; set; }
+        public Enums.MonitoringValue SensorType { get; set; }
     }
 }

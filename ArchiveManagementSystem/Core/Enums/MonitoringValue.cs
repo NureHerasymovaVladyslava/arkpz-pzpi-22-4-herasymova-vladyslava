@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Core.Enums
 {
-    public enum SensorType
+    public enum MonitoringValue
     {
         Temperature = 1,
         Humidity,

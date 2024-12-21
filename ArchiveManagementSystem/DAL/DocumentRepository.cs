@@ -15,8 +15,8 @@ namespace DAL
     {
         private readonly Dictionary<OrderBy, string> _orderString = new()
         {
-            {OrderBy.CreatedAsc, " ORDER BY Created ASC;" },
-            {OrderBy.CreatedDesc, " ORDER BY Created DESC;" },
+            {OrderBy.CreatedAsc, " ORDER BY Added ASC;" },
+            {OrderBy.CreatedDesc, " ORDER BY Added DESC;" },
             {OrderBy.NameAsc, " ORDER BY Name ASC;" },
             {OrderBy.NameDesc, " ORDER BY Name Desc;" }
         };

@@ -17,7 +17,7 @@ namespace DAL
         {
         }
 
-        public async Task<IEnumerable<Sensor>> GetForRoomAsync(int roomId, SensorType? sensorType)
+        public async Task<IEnumerable<Sensor>> GetForRoomAsync(int roomId, MonitoringValue? sensorType)
         {
             using var connection = new SqlConnection(_connectionString);
             var sql = new StringBuilder(@"SELECT * FROM Sensor WHERE RoomId = @RoomId");

@@ -24,11 +24,12 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost("create")]
-        [Authorize(UserRoleManager.RoleAdmin)]
-        public async Task<IActionResult> CreateSensor([FromBody] CreateSensorModel model)
+        public async Task<IActionResult> CreateSensor([FromBody] Core.Enums.MonitoringValue sensorType)
         {
-            var sensor = new Sensor();
-            sensor.MapFrom(model);
+            var sensor = new Sensor()
+            {
+                SensorType = sensorType
+            };
 
             try
             {
@@ -83,7 +84,7 @@ namespace WebAPI.Controllers
 
         [HttpGet("room/{id}")]
         [Authorize(UserRoleManager.RoleAdmin, UserRoleManager.RoleManager)]
-        public async Task<IActionResult> GetForRoom(int id, SensorType? sensorType)
+        public async Task<IActionResult> GetForRoom(int id, Core.Enums.MonitoringValue? sensorType)
         {
             try
             {
@@ -99,7 +100,7 @@ namespace WebAPI.Controllers
 
         [HttpGet("diagnosis")]
         [Authorize(UserRoleManager.RoleManager)]
-        public async Task<IActionResult> ConductDiagnosis(int roomId, SensorType sensorType, int minutes)
+        public async Task<IActionResult> ConductDiagnosis(int roomId, MonitoringValue sensorType, int minutes)
         {
             try
             {
@@ -107,6 +108,7 @@ namespace WebAPI.Controllers
                 {
                     return BadRequest();
                 }
+                minutes *= 2;
                 var sensors = await _sensorRepository.GetForRoomAsync(roomId, sensorType);
                 var sensorLogs = new Dictionary<int, float[]>();
 

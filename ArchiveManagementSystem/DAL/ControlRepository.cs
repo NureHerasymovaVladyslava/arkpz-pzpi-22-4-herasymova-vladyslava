@@ -17,20 +17,20 @@ namespace DAL
         {
         }
 
-        public async Task<IEnumerable<Control>> GetForRoomAsync(int roomId, int? typeId)
+        public async Task<IEnumerable<Control>> GetForRoomAsync(int roomId, MonitoringValue? controlType)
         {
             using var connection = new SqlConnection(_connectionString);
             var sql = new StringBuilder(@"SELECT * FROM Control WHERE RoomId = @RoomId");
 
-            if (typeId != null)
+            if (controlType != null)
             {
-                sql.Append(@" AND TypeId = @TypeId");
+                sql.Append(@" AND ControlType = @ControlType");
             }
 
             sql.Append(";");
 
             return await connection.QueryAsync<Control>
-                (sql.ToString(), new { RoomId = roomId, TypeId = typeId });
+                (sql.ToString(), new { RoomId = roomId, ControlType = controlType });
         }
     }
 }

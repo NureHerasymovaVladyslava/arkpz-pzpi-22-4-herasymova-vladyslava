@@ -15,24 +15,40 @@ namespace WebAPI.Controllers
     public class LockController : ControllerBase
     {
         private readonly LockRepository _lockRepository;
+        private readonly LockLogRepository _lockLogRepository;
 
-        public LockController(LockRepository lockRepository)
+        public LockController(LockRepository lockRepository, LockLogRepository lockLogRepository)
         {
             _lockRepository = lockRepository;
+            _lockLogRepository = lockLogRepository;
         }
 
         [HttpPost("create")]
-        [Authorize(UserRoleManager.RoleAdmin)]
-        public async Task<IActionResult> CreateLock([FromBody] CreateLockModel model)
+        public async Task<IActionResult> CreateLock()
         {
             var @lock = new Lock();
-            @lock.MapFrom(model);
 
             try
             {
                 var result = await _lockRepository.CreateAsync(@lock);
 
                 return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
+        }
+
+        [HttpGet("check-state/{id}")]
+        public async Task<IActionResult> CheckState(int id)
+        {
+            try
+            {
+                var logs = await _lockLogRepository.GetForLockAsync(id);
+
+                return Ok(logs.Any(l => l.Approved != null && (bool)l.Approved 
+                    && l.ApprovedTime > DateTime.Now.AddSeconds(-30)));
             }
             catch (Exception ex)
             {

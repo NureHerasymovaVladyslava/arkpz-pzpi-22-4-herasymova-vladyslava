@@ -11,6 +11,6 @@ namespace Core.Models
     public class Lock
     {
         public int Id { get; set; }
-        public int RoomId { get; set; }
+        public int? RoomId { get; set; }
     }
 }

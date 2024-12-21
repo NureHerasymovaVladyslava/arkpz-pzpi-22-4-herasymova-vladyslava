@@ -23,16 +23,17 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost("create")]
-        [Authorize (UserRoleManager.RoleAdmin)]
-        public async Task<IActionResult> CreateControl([FromBody] CreateControlModel model)
+        public async Task<IActionResult> CreateControl([FromBody] MonitoringValue controlType)
         {
-            var control = new Control();
-            control.MapFrom(model);
-            control.Working = false;
+            var sensor = new Control()
+            {
+                ControlType = controlType,
+                Working = false
+            };
 
             try
             {
-                var result = await _controlRepository.CreateAsync(control);
+                var result = await _controlRepository.CreateAsync(sensor);
 
                 return Ok(result);
             }
@@ -83,11 +84,11 @@ namespace WebAPI.Controllers
 
         [HttpGet("room/{id}")]
         [Authorize(UserRoleManager.RoleAdmin, UserRoleManager.RoleManager)]
-        public async Task<IActionResult> GetForRoom(int id, int? typeId)
+        public async Task<IActionResult> GetForRoom(int id, MonitoringValue? controlType)
         {
             try
             {
-                var result = await _controlRepository.GetForRoomAsync(id, typeId);
+                var result = await _controlRepository.GetForRoomAsync(id, controlType);
 
                 return Ok(result);
             }
@@ -100,15 +101,6 @@ namespace WebAPI.Controllers
         [HttpPost("turn-on/{id}")]
         [Authorize (UserRoleManager.RoleManager)]
         public async Task<IActionResult> TurnOn(int id)
-        {
-            // logic for turning control device on
-
-            return Ok();
-        }
-
-        // accessed by control device after it is turned on
-        [HttpPut("confirm-on/{id}")]
-        public async Task<IActionResult> ConfirmOn(int id)
         {
             try
             {
@@ -133,15 +125,6 @@ namespace WebAPI.Controllers
         [Authorize (UserRoleManager.RoleManager)]
         public async Task<IActionResult> TurnOff(int id)
         {
-            // logic for turning control device back off
-
-            return Ok();
-        }
-
-        // accessed by control device after it is turned off
-        [HttpPut("confirm-off/{id}")]
-        public async Task<IActionResult> ConfirmOff(int id)
-        {
             try
             {
                 var control = await _controlRepository.GetByIdAsync(id);
@@ -154,6 +137,25 @@ namespace WebAPI.Controllers
                 var result = await _controlRepository.UpdateAsync(control);
 
                 return result ? Ok() : StatusCode(StatusCodes.Status500InternalServerError);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
+        }
+
+        [HttpGet("check-state/{id}")]
+        public async Task<IActionResult> CheckState(int id)
+        {
+            try
+            {
+                var control = await _controlRepository.GetByIdAsync(id);
+                if (control == null)
+                {
+                    return NotFound();
+                }
+
+                return Ok(control.Working);
             }
             catch (Exception ex)
             {

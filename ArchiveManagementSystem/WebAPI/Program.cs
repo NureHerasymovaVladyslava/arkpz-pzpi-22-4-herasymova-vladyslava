@@ -2,6 +2,7 @@
 using Core.Configurations;
 using DAL;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.HttpOverrides;
 using WebAPI.Hubs;
 using WebAPI.Managers;
 using WebAPI.Middlewares;
@@ -23,6 +24,7 @@ namespace WebAPI
 
             builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 
+
             builder.Services.AddScoped(typeof(GenericRepository<>));
             builder.Services.AddScoped(typeof(SensorLogRepository));
             builder.Services.AddScoped(typeof(SensorRepository));
@@ -31,6 +33,7 @@ namespace WebAPI
             builder.Services.AddScoped(typeof(AppUserRepository));
             builder.Services.AddScoped(typeof(ControlRepository));
             builder.Services.AddScoped(typeof(DocumentLogRepository));
+            builder.Services.AddScoped(typeof(DocumentRepository));
             builder.Services.AddScoped(typeof(DatabaseAdminManager));
 
             builder.Services.AddScoped(typeof(UserRoleManager));
@@ -49,6 +52,7 @@ namespace WebAPI
             builder.Services.AddSignalR();
 
             var app = builder.Build();
+
 
             app.UseRouting();
 

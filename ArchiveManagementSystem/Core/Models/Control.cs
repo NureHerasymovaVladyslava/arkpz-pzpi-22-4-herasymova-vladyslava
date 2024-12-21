@@ -1,4 +1,5 @@
-﻿using Dapper.Contrib.Extensions;
+﻿using Core.Enums;
+using Dapper.Contrib.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,8 +12,8 @@ namespace Core.Models
     public class Control
     {
         public int Id { get; set; }
-        public int RoomId { get; set; }
-        public int TypeId { get; set; }
+        public int? RoomId { get; set; }
+        public MonitoringValue ControlType { get; set; }
         public bool Working { get; set; }
     }
 }

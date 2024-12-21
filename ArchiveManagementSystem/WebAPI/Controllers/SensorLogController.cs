@@ -52,13 +52,17 @@ namespace WebAPI.Controllers
                     return NotFound();
                 }
 
-                var room = await _roomRepository.GetByIdAsync(sensor.RoomId);
+                if (sensor.RoomId == null)
+                {
+                    return NotFound();
+                }
+                var room = await _roomRepository.GetByIdAsync((int)sensor.RoomId);
                 if (room == null)
                 {
                     return NotFound();
                 }
 
-                if (sensor.SensorType == SensorType.Temperature
+                if (sensor.SensorType == Core.Enums.MonitoringValue.Temperature
                     && (sensorLog.Value > room.TempMax || sensorLog.Value < room.TempMin))
                 {
                     await _hubContext.Clients.All
@@ -67,7 +71,7 @@ namespace WebAPI.Controllers
                     _logger.LogInformation("Temperature in room {roomId} outside the limits", room.Id); //Temp
                 }
 
-                if (sensor.SensorType == SensorType.Humidity
+                if (sensor.SensorType == Core.Enums.MonitoringValue.Humidity
                     && (sensorLog.Value > room.HumMax || sensorLog.Value < room.HumMin))
                 {
                     await _hubContext.Clients.All
@@ -76,7 +80,7 @@ namespace WebAPI.Controllers
                     _logger.LogInformation("Humidity in room {roomId} outside the limits", room.Id); //Temp
                 }
 
-                if (sensor.SensorType == SensorType.Lighting
+                if (sensor.SensorType == Core.Enums.MonitoringValue.Lighting
                     && (sensorLog.Value > room.LightMax || sensorLog.Value < room.LightMin))
                 {
                     await _hubContext.Clients.All

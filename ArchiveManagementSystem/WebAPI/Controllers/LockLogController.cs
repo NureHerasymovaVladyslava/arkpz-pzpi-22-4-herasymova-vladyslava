@@ -89,9 +89,8 @@ namespace WebAPI.Controllers
                 }
 
                 lockLog.Approved = true;
+                lockLog.ApprovedTime = DateTime.Now;
                 var result = await _lockLogRepository.UpdateAsync(lockLog);
-
-                // logic to open lock
 
                 return result ? Ok() : StatusCode(StatusCodes.Status500InternalServerError);
             }
