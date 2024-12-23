@@ -15,5 +15,4 @@
     <ProjectReference Include="..\Core\Core.csproj" />
     <ProjectReference Include="..\DAL\DAL.csproj" />
   </ItemGroup>
-
 </Project>
