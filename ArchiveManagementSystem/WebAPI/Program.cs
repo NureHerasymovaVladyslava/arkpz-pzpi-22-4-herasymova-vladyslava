@@ -34,6 +34,7 @@ namespace WebAPI
             builder.Services.AddScoped(typeof(ControlRepository));
             builder.Services.AddScoped(typeof(DocumentLogRepository));
             builder.Services.AddScoped(typeof(DocumentRepository));
+            builder.Services.AddScoped(typeof(UserRoleRepository));
             builder.Services.AddScoped(typeof(DatabaseAdminManager));
 
             builder.Services.AddScoped(typeof(UserRoleManager));
@@ -62,11 +63,11 @@ namespace WebAPI
             app.UseMiddleware<AuthorizationMiddleware>();
 
             // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
-            {
+            //if (app.Environment.IsDevelopment())
+            //{
                 app.UseSwagger();
                 app.UseSwaggerUI();
-            }
+            //}
 
             app.UseHttpsRedirection();
 

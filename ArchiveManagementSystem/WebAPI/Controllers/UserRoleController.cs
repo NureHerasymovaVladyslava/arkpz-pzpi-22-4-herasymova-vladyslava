@@ -13,9 +13,9 @@ namespace WebAPI.Controllers
     [ApiController]
     public class UserRoleController : ControllerBase
     {
-        private readonly GenericRepository<UserRole> _userRoleRepository;
+        private readonly UserRoleRepository _userRoleRepository;
 
-        public UserRoleController(GenericRepository<UserRole> userRoleRepository)
+        public UserRoleController(UserRoleRepository userRoleRepository)
         {
             _userRoleRepository = userRoleRepository;
         }

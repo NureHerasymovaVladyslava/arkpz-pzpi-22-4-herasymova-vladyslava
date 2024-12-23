@@ -10,9 +10,9 @@ namespace WebAPI.Managers
         public const string RoleManager = "Manager";
         public const string RoleDatabaseAdmin = "DatabaseAdmin";
 
-        private readonly GenericRepository<UserRole> _userRoleRepository;
+        private readonly UserRoleRepository _userRoleRepository;
 
-        public UserRoleManager(GenericRepository<UserRole> userRoleRepository)
+        public UserRoleManager(UserRoleRepository userRoleRepository)
         {
             _userRoleRepository = userRoleRepository;
         }
@@ -29,6 +29,5 @@ namespace WebAPI.Managers
             }
 
             return false;
-        }
-    }
+        }    }
 }
